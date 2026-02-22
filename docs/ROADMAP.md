@@ -134,6 +134,7 @@ A personal inventory management application for tracking sewing materials includ
 
 ### Infrastructure
 - [ ] Setup CI/CD pipeline
+- [ ] Database migrations: using **node-pg-migrate** from the start
 - [ ] Migrate to Prisma ORM (when complexity increases)
 - [ ] Migrate to cloud blob storage (S3, Azure, etc.)
 - [ ] Setup production environment

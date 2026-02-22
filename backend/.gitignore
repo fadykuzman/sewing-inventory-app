@@ -17,4 +17,5 @@ logs/
 *.log
 
 # Local file storage (images, PDFs)
-uploads/
+uploads/*
+!uploads/.gitkeep
