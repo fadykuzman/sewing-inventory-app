@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon --exec ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate:up": "node-pg-migrate --envPath ../.env --migration-file-language sql up",
     "migrate:down": "node-pg-migrate --envPath ../.env --migration-file-language sql down",
