@@ -11,7 +11,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'FabricList'
 
 export default function FabricListScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { data: fabrics, isLoading, isError } = useQuery({
+  const { data: fabrics, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['fabrics'],
     queryFn: getFabrics,
   });
@@ -34,6 +34,8 @@ export default function FabricListScreen() {
       data={fabrics}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
+      refreshing={isRefetching}
+      onRefresh={refetch}
       renderItem={({ item }) => <FabricCard fabric={item} onPress={() => navigation.navigate('FabricDetail', { id: item.id })} />}
     />
   );

@@ -43,4 +43,13 @@ export class FabricRepository {
     );
     return result.rows;
   }
+
+  async deleteById(id: string): Promise<boolean> {
+    const result = await this.pool.query(`DELETE FROM fabrics WHERE id = $1`, [id]);
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async deleteImagesByFabricId(fabricId: string): Promise<void> {
+    await this.pool.query(`DELETE FROM fabric_images WHERE fabric_id = $1`, [fabricId]);
+  }
 }

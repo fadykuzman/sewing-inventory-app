@@ -16,6 +16,12 @@ export async function getFabricById(id: string): Promise<FabricWithImages> {
   return json.data!;
 }
 
+export async function deleteFabric(id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/fabrics/${id}`, { method: 'DELETE' });
+  const json: ApiResponse<never> = await response.json();
+  if (!response.ok) throw new Error(json.error ?? 'Failed to delete fabric');
+}
+
 export async function createFabric(formData: FormData): Promise<ApiResponse<FabricWithImages>> {
   const response = await fetch(`${API_URL}/fabrics`, {
     method: 'POST',

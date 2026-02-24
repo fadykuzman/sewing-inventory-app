@@ -1,18 +1,31 @@
+import { useState } from 'react';
 import { ScrollView, Image, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Divider, Text } from 'react-native-paper';
-import { useQuery } from '@tanstack/react-query';
-import { useRoute } from '@react-navigation/native';
+import { ActivityIndicator, Button, Dialog, Divider, Portal, Text } from 'react-native-paper';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { getFabricById, API_URL } from '../api/fabrics';
+import { getFabricById, deleteFabric, API_URL } from '../api/fabrics';
 import type { RootStackParamList } from '../../App';
 
 type RouteProp = NativeStackScreenProps<RootStackParamList, 'FabricDetail'>['route'];
 
 export default function FabricDetailScreen() {
   const { params } = useRoute<RouteProp>();
+  const navigation = useNavigation();
+  const queryClient = useQueryClient();
+  const [confirmVisible, setConfirmVisible] = useState(false);
+
   const { data: fabric, isLoading, isError } = useQuery({
     queryKey: ['fabric', params.id],
     queryFn: () => getFabricById(params.id),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteFabric(params.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fabrics'] });
+      navigation.goBack();
+    },
   });
 
   if (isLoading) {
@@ -26,27 +39,57 @@ export default function FabricDetailScreen() {
   const baseUrl = API_URL.replace('/api/v1', '');
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {fabric.images.map((img) => (
-        <Image
-          key={img.id}
-          source={{ uri: `${baseUrl}/${img.file_path}` }}
-          style={styles.image}
-          resizeMode="cover"
-        />
-      ))}
+    <>
+      <ScrollView contentContainerStyle={styles.container}>
+        {fabric.images.map((img) => (
+          <Image
+            key={img.id}
+            source={{ uri: `${baseUrl}/${img.file_path}` }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        ))}
 
-      <Text variant="headlineSmall" style={styles.title}>{fabric.type}</Text>
-      <Divider style={styles.divider} />
+        <Text variant="headlineSmall" style={styles.title}>{fabric.type}</Text>
+        <Divider style={styles.divider} />
 
-      <Field label="Amount" value={`${fabric.amount_meters} m`} />
-      {fabric.color && <Field label="Color" value={fabric.color} />}
-      {fabric.pattern && <Field label="Pattern" value={fabric.pattern} />}
-      {fabric.label && <Field label="Brand" value={fabric.label} />}
-      {fabric.purchase_location && <Field label="Purchased at" value={fabric.purchase_location} />}
-      {fabric.cost != null && <Field label="Cost" value={`${fabric.cost}`} />}
-      {fabric.project_ideas && <Field label="Project ideas" value={fabric.project_ideas} />}
-    </ScrollView>
+        <Field label="Amount" value={`${fabric.amount_meters} m`} />
+        {fabric.color && <Field label="Color" value={fabric.color} />}
+        {fabric.pattern && <Field label="Pattern" value={fabric.pattern} />}
+        {fabric.label && <Field label="Brand" value={fabric.label} />}
+        {fabric.purchase_location && <Field label="Purchased at" value={fabric.purchase_location} />}
+        {fabric.cost != null && <Field label="Cost" value={`${fabric.cost}`} />}
+        {fabric.project_ideas && <Field label="Project ideas" value={fabric.project_ideas} />}
+
+        <Button
+          mode="outlined"
+          textColor="red"
+          style={styles.deleteButton}
+          onPress={() => setConfirmVisible(true)}
+        >
+          Delete fabric
+        </Button>
+      </ScrollView>
+
+      <Portal>
+        <Dialog visible={confirmVisible} onDismiss={() => setConfirmVisible(false)}>
+          <Dialog.Title>Delete fabric?</Dialog.Title>
+          <Dialog.Content>
+            <Text>This will permanently delete the fabric and all its images.</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setConfirmVisible(false)}>Cancel</Button>
+            <Button
+              textColor="red"
+              loading={deleteMutation.isPending}
+              onPress={() => deleteMutation.mutate()}
+            >
+              Delete
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </>
   );
 }
 
@@ -67,4 +110,5 @@ const styles = StyleSheet.create({
   divider: { marginBottom: 12 },
   field: { marginBottom: 12 },
   label: { opacity: 0.6, marginBottom: 2 },
+  deleteButton: { marginTop: 24, borderColor: 'red' },
 });

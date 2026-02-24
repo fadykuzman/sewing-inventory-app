@@ -26,9 +26,7 @@ const pool = new Pool({
 
 app.use(cors())
 app.use(express.json())
-const uploadsPath = path.join(__dirname, '../uploads');
-console.log('Serving uploads from:', uploadsPath);
-app.use('/uploads', express.static(uploadsPath))
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 app.use('/api/v1/fabrics', fabricsRouter(pool))
 
 app.listen(port, () => {

@@ -1,3 +1,5 @@
+import fs from 'fs/promises';
+import path from 'path';
 import { FabricRepository } from '../repositories/fabricRepository';
 import { CreateFabricInput, Fabric, FabricImage, FabricWithImages } from '../types/fabric';
 
@@ -33,6 +35,23 @@ export class FabricService {
     if (!fabric) return null;
     const images = await this.repo.findImagesByFabricId(fabric.id);
     return { ...fabric, images };
+  }
+
+  async deleteFabric(id: string): Promise<boolean> {
+    const images = await this.repo.findImagesByFabricId(id);
+
+    await this.repo.deleteImagesByFabricId(id);
+    const deleted = await this.repo.deleteById(id);
+
+    if (deleted) {
+      await Promise.allSettled(
+        images.map((img) =>
+          fs.unlink(path.join(process.cwd(), img.file_path))
+        )
+      );
+    }
+
+    return deleted;
   }
 
   async saveImages(fabricId: string, files: ImageFile[]): Promise<SaveImagesResult> {

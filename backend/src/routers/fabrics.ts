@@ -90,5 +90,18 @@ export default function fabricsRouter(pool: Pool) {
     }
   });
 
+  router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const deleted = await fabricService.deleteFabric(req.params['id'] as string);
+      if (!deleted) {
+        res.status(404).json({ success: false, error: 'Fabric not found' });
+        return;
+      }
+      res.json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   return router;
 }
