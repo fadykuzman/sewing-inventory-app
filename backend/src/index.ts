@@ -1,6 +1,7 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import fabricsRouter from './routers/fabrics';
 
 dotenv.config({ path: '../.env' });
 
@@ -22,6 +23,7 @@ const pool = new Pool({
 })
 
 app.use(express.json())
+app.use('/api/v1/fabrics', fabricsRouter(pool))
 
 app.listen(port, () => {
   console.log("Hello from server!")
@@ -30,3 +32,9 @@ app.listen(port, () => {
 pool.query('SELECT 1')
   .then(() => console.log('DB CONNECTED!'))
   .catch(err => console.error('DB CONNECTION FAILED', err))
+
+// Centralized error handler — must be last
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(`[${req.method} ${req.path}]`, err);
+  res.status(500).json({ success: false, error: 'An unexpected error occurred. Please try again.' });
+});
