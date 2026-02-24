@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import fabricsRouter from './routers/fabrics';
 
 dotenv.config({ path: '../.env' });
@@ -22,6 +23,7 @@ const pool = new Pool({
   password: dbPassword,
 })
 
+app.use(cors())
 app.use(express.json())
 app.use('/api/v1/fabrics', fabricsRouter(pool))
 
