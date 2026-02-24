@@ -1,4 +1,5 @@
-interface CreateFabricInput {
+// Raw request body — all fields optional and possibly strings from form data
+interface RawFabricInput {
   type?: string;
   color?: string;
   pattern?: string;
@@ -12,7 +13,7 @@ interface CreateFabricInput {
 const MAX_SHORT = 100;
 const MAX_LONG = 1000;
 
-export function validateCreateFabric(body: CreateFabricInput): string[] {
+export function validateCreateFabric(body: RawFabricInput): string[] {
   const errors: string[] = [];
 
   // type — required, non-empty, max 100
@@ -41,7 +42,7 @@ export function validateCreateFabric(body: CreateFabricInput): string[] {
   }
 
   // optional string fields — max length
-  const optionalShort: { field: keyof CreateFabricInput; label: string }[] = [
+  const optionalShort: { field: keyof RawFabricInput; label: string }[] = [
     { field: 'color', label: 'Color' },
     { field: 'pattern', label: 'Pattern' },
     { field: 'label', label: 'Label' },

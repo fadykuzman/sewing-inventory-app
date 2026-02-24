@@ -5,6 +5,7 @@ import { validateCreateFabric } from '../validation/fabricValidation';
 import { FabricRepository } from '../repositories/fabricRepository';
 import { FabricService } from '../services/fabricService';
 import { Pool } from 'pg';
+import { ApiResponse, FabricWithImages } from '../types/fabric';
 
 const storage = multer.diskStorage({
   destination: 'uploads/fabrics/',
@@ -48,20 +49,17 @@ export default function fabricsRouter(pool: Pool) {
       const fabric = await fabricService.createFabric(req.body);
 
       const files = (req.files as Express.Multer.File[]) ?? [];
-      let images: object[] = [];
-      let warning: string | undefined;
+      const { images = [], warning } = files.length > 0
+        ? await fabricService.saveImages(fabric.id, files)
+        : { images: [], warning: undefined };
 
-      if (files.length > 0) {
-        const result = await fabricService.saveImages(fabric.id, files);
-        images = result.images;
-        warning = result.warning;
-      }
-
-      res.status(201).json({
+      const response: ApiResponse<FabricWithImages> = {
         success: true,
         data: { ...fabric, images },
         ...(warning && { warning }),
-      });
+      };
+
+      res.status(201).json(response);
     } catch (err) {
       next(err);
     }

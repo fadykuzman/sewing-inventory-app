@@ -1,20 +1,10 @@
 import { Pool } from 'pg';
-
-interface InsertFabricData {
-  type: string;
-  color?: string;
-  pattern?: string;
-  amount_meters: number;
-  label?: string;
-  purchase_location?: string;
-  cost?: number;
-  project_ideas?: string;
-}
+import { CreateFabricInput, Fabric, FabricImage } from '../types/fabric';
 
 export class FabricRepository {
   constructor(private pool: Pool) {}
 
-  async insert(data: InsertFabricData) {
+  async insert(data: CreateFabricInput): Promise<Fabric> {
     const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
 
     const result = await this.pool.query(
@@ -27,7 +17,7 @@ export class FabricRepository {
     return result.rows[0];
   }
 
-  async insertImage(fabricId: number, filePath: string, order: number) {
+  async insertImage(fabricId: string, filePath: string, order: number): Promise<FabricImage> {
     const result = await this.pool.query(
       `INSERT INTO fabric_images (fabric_id, file_path, "order") VALUES ($1, $2, $3) RETURNING *`,
       [fabricId, filePath, order]

@@ -1,34 +1,24 @@
 import { FabricRepository } from '../repositories/fabricRepository';
-
-interface CreateFabricData {
-  type: string;
-  color?: string;
-  pattern?: string;
-  amount_meters: number;
-  label?: string;
-  purchase_location?: string;
-  cost?: number;
-  project_ideas?: string;
-}
+import { CreateFabricInput, Fabric, FabricImage } from '../types/fabric';
 
 interface ImageFile {
   filename: string;
 }
 
 interface SaveImagesResult {
-  images: object[];
+  images: FabricImage[];
   warning?: string;
 }
 
 export class FabricService {
   constructor(private repo: FabricRepository) {}
 
-  async createFabric(data: CreateFabricData) {
+  async createFabric(data: CreateFabricInput): Promise<Fabric> {
     return this.repo.insert(data);
   }
 
-  async saveImages(fabricId: number, files: ImageFile[]): Promise<SaveImagesResult> {
-    let images: object[] = [];
+  async saveImages(fabricId: string, files: ImageFile[]): Promise<SaveImagesResult> {
+    let images: FabricImage[] = [];
     let warning: string | undefined;
 
     try {
