@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { validateCreateFabric } from '../validation/fabricValidation';
+import { FabricRepository } from '../repositories/fabricRepository';
 import { FabricService } from '../services/fabricService';
 import { Pool } from 'pg';
 
@@ -33,7 +34,8 @@ const upload = multer({
 
 export default function fabricsRouter(pool: Pool) {
   const router = Router();
-  const fabricService = new FabricService(pool);
+  const fabricRepo = new FabricRepository(pool);
+  const fabricService = new FabricService(fabricRepo);
 
   router.post('/', upload.array('images', MAX_IMAGE_COUNT), async (req: Request, res: Response, next: NextFunction) => {
     try {

@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { FabricRepository } from '../repositories/fabricRepository';
 
 interface CreateFabricData {
   type: string;
@@ -21,19 +21,10 @@ interface SaveImagesResult {
 }
 
 export class FabricService {
-  constructor(private pool: Pool) {}
+  constructor(private repo: FabricRepository) {}
 
   async createFabric(data: CreateFabricData) {
-    const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
-
-    const result = await this.pool.query(
-      `INSERT INTO fabrics (type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas]
-    );
-
-    return result.rows[0];
+    return this.repo.insert(data);
   }
 
   async saveImages(fabricId: number, files: ImageFile[]): Promise<SaveImagesResult> {
@@ -43,10 +34,7 @@ export class FabricService {
     try {
       images = await Promise.all(
         files.map((file, index) =>
-          this.pool.query(
-            `INSERT INTO fabric_images (fabric_id, file_path, "order") VALUES ($1, $2, $3) RETURNING *`,
-            [fabricId, `/uploads/fabrics/${file.filename}`, index]
-          ).then(r => r.rows[0])
+          this.repo.insertImage(fabricId, `/uploads/fabrics/${file.filename}`, index)
         )
       );
     } catch (err) {
