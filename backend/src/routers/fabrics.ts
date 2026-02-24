@@ -11,7 +11,8 @@ const storage = multer.diskStorage({
   destination: 'uploads/fabrics/',
   filename: (_req, file, cb) => {
     const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${path.extname(file.originalname)}`);
+    const ext = path.extname(file.originalname) || `.${file.mimetype.split('/')[1]}`;
+    cb(null, `${unique}${ext}`);
   },
 });
 
@@ -37,6 +38,30 @@ export default function fabricsRouter(pool: Pool) {
   const router = Router();
   const fabricRepo = new FabricRepository(pool);
   const fabricService = new FabricService(fabricRepo);
+
+  router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const fabrics = await fabricService.getAllFabrics();
+      const response: ApiResponse<FabricWithImages[]> = { success: true, data: fabrics };
+      res.json(response);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const fabric = await fabricService.getFabricById(req.params['id'] as string);
+      if (!fabric) {
+        res.status(404).json({ success: false, error: 'Fabric not found' });
+        return;
+      }
+      const response: ApiResponse<FabricWithImages> = { success: true, data: fabric };
+      res.json(response);
+    } catch (err) {
+      next(err);
+    }
+  });
 
   router.post('/', upload.array('images', MAX_IMAGE_COUNT), async (req: Request, res: Response, next: NextFunction) => {
     try {

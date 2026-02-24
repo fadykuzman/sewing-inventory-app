@@ -25,4 +25,22 @@ export class FabricRepository {
 
     return result.rows[0];
   }
+
+  async findAll(): Promise<Fabric[]> {
+    const result = await this.pool.query(`SELECT * FROM fabrics ORDER BY created_at DESC`);
+    return result.rows;
+  }
+
+  async findById(id: string): Promise<Fabric | null> {
+    const result = await this.pool.query(`SELECT * FROM fabrics WHERE id = $1`, [id]);
+    return result.rows[0] ?? null;
+  }
+
+  async findImagesByFabricId(fabricId: string): Promise<FabricImage[]> {
+    const result = await this.pool.query(
+      `SELECT * FROM fabric_images WHERE fabric_id = $1 ORDER BY "order" ASC`,
+      [fabricId]
+    );
+    return result.rows;
+  }
 }

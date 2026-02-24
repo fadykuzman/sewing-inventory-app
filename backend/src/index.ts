@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
 import fabricsRouter from './routers/fabrics';
 
 dotenv.config({ path: '../.env' });
@@ -25,6 +26,9 @@ const pool = new Pool({
 
 app.use(cors())
 app.use(express.json())
+const uploadsPath = path.join(__dirname, '../uploads');
+console.log('Serving uploads from:', uploadsPath);
+app.use('/uploads', express.static(uploadsPath))
 app.use('/api/v1/fabrics', fabricsRouter(pool))
 
 app.listen(port, () => {

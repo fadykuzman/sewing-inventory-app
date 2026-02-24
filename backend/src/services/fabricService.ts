@@ -1,5 +1,5 @@
 import { FabricRepository } from '../repositories/fabricRepository';
-import { CreateFabricInput, Fabric, FabricImage } from '../types/fabric';
+import { CreateFabricInput, Fabric, FabricImage, FabricWithImages } from '../types/fabric';
 
 interface ImageFile {
   filename: string;
@@ -15,6 +15,24 @@ export class FabricService {
 
   async createFabric(data: CreateFabricInput): Promise<Fabric> {
     return this.repo.insert(data);
+  }
+
+  async getAllFabrics(): Promise<FabricWithImages[]> {
+    const fabrics = await this.repo.findAll();
+    const withImages = await Promise.all(
+      fabrics.map(async (fabric) => {
+        const images = await this.repo.findImagesByFabricId(fabric.id);
+        return { ...fabric, images };
+      })
+    );
+    return withImages;
+  }
+
+  async getFabricById(id: string): Promise<FabricWithImages | null> {
+    const fabric = await this.repo.findById(id);
+    if (!fabric) return null;
+    const images = await this.repo.findImagesByFabricId(fabric.id);
+    return { ...fabric, images };
   }
 
   async saveImages(fabricId: string, files: ImageFile[]): Promise<SaveImagesResult> {
