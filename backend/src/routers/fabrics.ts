@@ -11,13 +11,29 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGE_COUNT = 10;
+
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`File type ${file.mimetype} not allowed. Only JPEG, PNG, WebP, and GIF are accepted.`));
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: MAX_FILE_SIZE },
+});
 
 export default function fabricsRouter(pool: Pool) {
 
   const router = Router();
 
-  router.post('/', upload.array('images'), async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/', upload.array('images', MAX_IMAGE_COUNT), async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = req.body;
 
@@ -45,7 +61,7 @@ export default function fabricsRouter(pool: Pool) {
             files.map((file, index) =>
               pool.query(
                 `INSERT INTO fabric_images (fabric_id, file_path, "order") VALUES ($1, $2, $3) RETURNING *`,
-                [fabric.id, file.path, index]
+                [fabric.id, `/uploads/fabrics/${file.filename}`, index]
               ).then(r => r.rows[0])
             )
           );
