@@ -9,7 +9,8 @@ export async function createFabric(formData: FormData) {
   const json = await response.json();
 
   if (!response.ok) {
-    throw new Error(json.error ?? 'Failed to create fabric');
+    const message = json.errors?.join(' ') ?? json.error ?? 'Failed to create fabric';
+    throw new Error(message);
   }
 
   return json;

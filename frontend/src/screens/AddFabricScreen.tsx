@@ -1,100 +1,59 @@
 import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { Button, HelperText, Text, TextInput } from 'react-native-paper';
+import { useMutation } from '@tanstack/react-query';
 import { createFabric } from '../api/fabrics';
+import { useFabricForm } from '../hooks/useFabricForm';
+import { useImagePicker } from '../hooks/useImagePicker';
 
 export default function AddFabricScreen() {
-  const [type, setType] = useState('');
-  const [color, setColor] = useState('');
-  const [pattern, setPattern] = useState('');
-  const [amountMeters, setAmountMeters] = useState('');
-  const [label, setLabel] = useState('');
-  const [purchaseLocation, setPurchaseLocation] = useState('');
-  const [cost, setCost] = useState('');
-  const [projectIdeas, setProjectIdeas] = useState('');
-
-  const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
-
-  const [error, setError] = useState<string | null>(null);
+  const { formData, setField, reset, validate, toFormData } = useFabricForm();
+  const { images, pickImages, clear: clearImages, appendToFormData } = useImagePicker();
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  async function handlePickImages() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      setImages(result.assets);
-    }
-  }
+  const mutation = useMutation({
+    mutationFn: createFabric,
+    onSuccess: (result) => {
+      if (result.warning) setWarning(result.warning);
+      reset();
+      clearImages();
+    },
+    onMutate: () => {
+      setValidationError(null);
+      setWarning(null);
+    },
+  });
 
   async function handleSubmit() {
-    console.log('handleSubmit called');
-    setError(null);
+    setValidationError(null);
     setWarning(null);
-    setSuccess(false);
 
-    if (!type.trim()) {
-      setError('Fabric type is required.');
-      return;
-    }
-    if (!amountMeters.trim() || isNaN(Number(amountMeters))) {
-      setError('Amount (meters) is required and must be a number.');
+    const errors = validate();
+    if (errors.length > 0) {
+      setValidationError(errors.join(' '));
       return;
     }
 
-    console.log('validation passed, building formData');
-    const formData = new FormData();
-    formData.append('type', type.trim());
-    formData.append('amount_meters', amountMeters.trim());
-    if (color) formData.append('color', color.trim());
-    if (pattern) formData.append('pattern', pattern.trim());
-    if (label) formData.append('label', label.trim());
-    if (purchaseLocation) formData.append('purchase_location', purchaseLocation.trim());
-    if (cost) formData.append('cost', cost.trim());
-    if (projectIdeas) formData.append('project_ideas', projectIdeas.trim());
-
-    console.log('images count:', images.length);
-    for (const asset of images) {
-      console.log('processing image:', asset.uri);
-      const filename = asset.uri.split('/').pop() ?? 'image.jpg';
-      const mimeType = asset.mimeType ?? 'image/jpeg';
-      const blob = await fetch(asset.uri).then(r => r.blob());
-      console.log('blob fetched');
-      formData.append('images', blob, filename);
-    }
-
-    try {
-      setLoading(true);
-      console.log('calling createFabric');
-      const result = await createFabric(formData);
-      if (result.warning) setWarning(result.warning);
-      setSuccess(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
+    const fd = toFormData();
+    await appendToFormData(fd);
+    mutation.mutate(fd);
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text variant="headlineMedium" style={styles.title}>Add Fabric</Text>
 
-      <TextInput label="Type *" value={type} onChangeText={setType} style={styles.input} />
-      <TextInput label="Amount (meters) *" value={amountMeters} onChangeText={setAmountMeters} keyboardType="decimal-pad" style={styles.input} />
-      <TextInput label="Color" value={color} onChangeText={setColor} style={styles.input} />
-      <TextInput label="Pattern" value={pattern} onChangeText={setPattern} style={styles.input} />
-      <TextInput label="Label / Brand" value={label} onChangeText={setLabel} style={styles.input} />
-      <TextInput label="Purchase Location" value={purchaseLocation} onChangeText={setPurchaseLocation} style={styles.input} />
-      <TextInput label="Cost" value={cost} onChangeText={setCost} keyboardType="decimal-pad" style={styles.input} />
-      <TextInput label="Project Ideas" value={projectIdeas} onChangeText={setProjectIdeas} multiline style={styles.input} />
+      <TextInput label="Type *" value={formData.type} onChangeText={v => setField('type', v)} style={styles.input} />
+      <TextInput label="Amount (meters) *" value={formData.amountMeters} onChangeText={v => setField('amountMeters', v)} keyboardType="decimal-pad" style={styles.input} />
+      <TextInput label="Color" value={formData.color} onChangeText={v => setField('color', v)} style={styles.input} />
+      <TextInput label="Pattern" value={formData.pattern} onChangeText={v => setField('pattern', v)} style={styles.input} />
+      <TextInput label="Label / Brand" value={formData.label} onChangeText={v => setField('label', v)} style={styles.input} />
+      <TextInput label="Purchase Location" value={formData.purchaseLocation} onChangeText={v => setField('purchaseLocation', v)} style={styles.input} />
+      <TextInput label="Cost" value={formData.cost} onChangeText={v => setField('cost', v)} keyboardType="decimal-pad" style={styles.input} />
+      <TextInput label="Project Ideas" value={formData.projectIdeas} onChangeText={v => setField('projectIdeas', v)} multiline style={styles.input} />
 
-      <Button mode="outlined" onPress={handlePickImages} style={styles.input}>
+      <Button mode="outlined" onPress={pickImages} style={styles.input}>
         {images.length > 0 ? `${images.length} image(s) selected` : 'Add Images'}
       </Button>
 
@@ -104,12 +63,13 @@ export default function AddFabricScreen() {
         ))}
       </View>
 
-      {error && <HelperText type="error" visible>{error}</HelperText>}
+      {validationError && <HelperText type="error" visible>{validationError}</HelperText>}
+      {mutation.isError && <HelperText type="error" visible>{mutation.error.message}</HelperText>}
       {warning && <HelperText type="info" visible>{warning}</HelperText>}
-      {success && <HelperText type="info" visible>Fabric added successfully!</HelperText>}
+      {mutation.isSuccess && <HelperText type="info" visible>Fabric added successfully!</HelperText>}
 
       <View style={styles.button}>
-        <Button mode="contained" onPress={handleSubmit} loading={loading} disabled={loading}>
+        <Button mode="contained" onPress={handleSubmit} loading={mutation.isPending} disabled={mutation.isPending}>
           Save Fabric
         </Button>
       </View>
