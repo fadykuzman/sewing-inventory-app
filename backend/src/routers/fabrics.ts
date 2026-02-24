@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
+import { validateCreateFabric } from '../validation/fabricValidation';
 
 const storage = multer.diskStorage({
   destination: 'uploads/fabrics/',
@@ -37,8 +38,9 @@ export default function fabricsRouter(pool: Pool) {
     try {
       const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = req.body;
 
-      if (!type || amount_meters == null) {
-        res.status(400).json({ success: false, error: 'type and amount_meters are required.' });
+      const errors = validateCreateFabric(req.body);
+      if (errors.length > 0) {
+        res.status(400).json({ success: false, errors });
         return;
       }
 
