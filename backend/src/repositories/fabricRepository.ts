@@ -31,17 +31,29 @@ export class FabricRepository {
     return result.rows;
   }
 
-  async findAllWithImages(limit: number, offset: number): Promise<FabricWithImages[]> {
+  async findAllWithImages(limit: number, offset: number, search?: string): Promise<FabricWithImages[]> {
+    const params: (string | number)[] = [];
+    let whereClause = '';
+
+    if (search) {
+      params.push(`%${search}%`);
+      whereClause = `WHERE type ILIKE $1 OR color ILIKE $1 OR pattern ILIKE $1 OR label ILIKE $1 OR purchase_location ILIKE $1`;
+    }
+
+    const limitIdx = params.length + 1;
+    const offsetIdx = params.length + 2;
+    params.push(limit, offset);
+
     const result = await this.pool.query(
       `SELECT f.*,
               fi.id AS image_id, fi.file_path, fi."order", fi.created_at AS image_created_at
        FROM fabrics f
        LEFT JOIN fabric_images fi ON f.id = fi.fabric_id
        WHERE f.id IN (
-         SELECT id FROM fabrics ORDER BY created_at DESC LIMIT $1 OFFSET $2
+         SELECT id FROM fabrics ${whereClause} ORDER BY created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}
        )
        ORDER BY f.created_at DESC, fi."order" ASC`,
-      [limit, offset]
+      params
     );
 
     const fabricMap = new Map<string, FabricWithImages>();

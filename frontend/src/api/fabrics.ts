@@ -61,8 +61,10 @@ export async function updateFabric(id: string, data: Record<string, unknown>): P
   return json;
 }
 
-export async function getFabricsPaginated(limit: number, offset: number): Promise<FabricWithImages[]> {
-  const response = await fetch(`${API_URL}/fabrics?limit=${limit}&offset=${offset}`)
+export async function getFabricsPaginated(limit: number, offset: number, search?: string): Promise<FabricWithImages[]> {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  if (search) params.set('search', search);
+  const response = await fetch(`${API_URL}/fabrics?${params}`);
   const json: ApiResponse<FabricWithImages[]> = await response.json();
   if (!response.ok) throw new Error(json.error ?? 'Failed to fetch fabrics');
   return json.data!;

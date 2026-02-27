@@ -45,7 +45,8 @@ export default function fabricsRouter(pool: Pool) {
   router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const { limit, offset } = parsePagination(_req.query);
-      const fabrics = await fabricService.getAllFabrics(limit, offset);
+      const search = typeof _req.query.search === 'string' ? _req.query.search.trim() : undefined;
+      const fabrics = await fabricService.getAllFabrics(limit, offset, search || undefined);
       const response: ApiResponse<FabricWithImages[]> = { success: true, data: fabrics };
       res.json(response);
     } catch (err) {

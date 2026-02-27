@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Card, Text } from 'react-native-paper';
+import { ActivityIndicator, Card, Searchbar, Text } from 'react-native-paper';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,12 +10,26 @@ import type { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'FabricList'>;
 
+function useDebounce(value: string, delay: number): string {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
+}
+
 export default function FabricListScreen() {
   const navigation = useNavigation<NavigationProp>();
   const PAGE_SIZE = 20;
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
   const { data, isLoading, isError, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['fabrics'],
-    queryFn: ({ pageParam = 0 }) => getFabricsPaginated(PAGE_SIZE, pageParam),
+    queryKey: ['fabrics', debouncedSearch],
+    queryFn: ({ pageParam = 0 }) => getFabricsPaginated(PAGE_SIZE, pageParam, debouncedSearch || undefined),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < PAGE_SIZE) return undefined;
@@ -24,18 +39,32 @@ export default function FabricListScreen() {
 
   const fabrics = data?.pages.flat() ?? [];
 
+  const listHeader = (
+    <Searchbar
+      placeholder="Search fabrics..."
+      value={searchQuery}
+      onChangeText={setSearchQuery}
+      style={styles.searchbar}
+    />
+  );
+
   if (isLoading) {
-    return <View style={styles.centered}><ActivityIndicator /></View>;
+    return (
+      <View style={styles.container}>
+        {listHeader}
+        <View style={styles.centered}><ActivityIndicator /></View>
+      </View>
+    );
   }
 
   if (isError) {
-    return <View style={styles.centered}><Text>Failed to load fabrics.</Text></View>;
+    return (
+      <View style={styles.container}>
+        {listHeader}
+        <View style={styles.centered}><Text>Failed to load fabrics.</Text></View>
+      </View>
+    );
   }
-
-  if (!isLoading && fabrics.length === 0) {
-    return <View style={styles.centered}><Text>No fabrics yet. Add one!</Text></View>;
-  }
-
 
   return (
     <FlatList
@@ -46,6 +75,8 @@ export default function FabricListScreen() {
       onRefresh={refetch}
       onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
       onEndReachedThreshold={0.5}
+      ListHeaderComponent={listHeader}
+      ListEmptyComponent={<View style={styles.centered}><Text>No fabrics found.</Text></View>}
       ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: 16 }} /> : null}
       renderItem={({ item }) => <FabricCard fabric={item} onPress={() => navigation.navigate('FabricDetail', { id: item.id })} />}
     />
@@ -70,7 +101,9 @@ function FabricCard({ fabric, onPress }: { fabric: FabricWithImages; onPress: ()
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  searchbar: { margin: 16, marginBottom: 8 },
   list: { padding: 16, gap: 12 },
   card: { marginBottom: 4 },
   cardContent: { paddingTop: 8 },
