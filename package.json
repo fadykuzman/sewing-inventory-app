@@ -1,6 +1,10 @@
 {
   "name": "sewing-inventory-app",
   "private": true,
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
   "workspaces": [
     "shared",
     "backend",

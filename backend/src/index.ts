@@ -5,28 +5,33 @@ import cors from 'cors';
 import path from 'path';
 import fabricsRouter from './routers/fabrics';
 
-dotenv.config({ path: '../.env' });
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: '../.env' });
+}
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
-const dbHost = process.env.DB_HOST;
-const dbPort = Number(process.env.DB_PORT);
-const dbName = process.env.DB_NAME;
-const dbUser = process.env.DB_USER;
-const dbPassword = String(process.env.DB_PASSWORD);
 
-const pool = new Pool({
-  host: dbHost,
-  port: dbPort,
-  database: dbName,
-  user: dbUser,
-  password: dbPassword,
-})
+const pool = process.env.DATABASE_URL
+  ? new Pool({ connectionString: process.env.DATABASE_URL })
+  : new Pool({
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: String(process.env.DB_PASSWORD),
+  });
 
-app.use(cors())
+const corsOrigin = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : '*';
+app.use(cors({ origin: corsOrigin }))
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
+})
 app.use('/api/v1/fabrics', fabricsRouter(pool))
 
 app.listen(port, () => {

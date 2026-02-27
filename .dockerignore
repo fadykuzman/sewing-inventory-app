@@ -1,0 +1,4 @@
+shared/dist
+backend/dist
+node_modules
+frontend

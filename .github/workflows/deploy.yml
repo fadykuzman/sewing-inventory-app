@@ -1,0 +1,56 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Containerfile
+          push: true
+          tags: |
+            ghcr.io/fadykuzman/sewing-inventory-app/backend:latest
+            ghcr.io/fadykuzman/sewing-inventory-app/backend:${{ github.sha }}
+
+deploy:
+  needs: build-and-push
+  runs-on: ubuntu-latest
+  steps:
+    - uses: tailscale/github-action@v3
+      with:
+        oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+        oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+        tags: tag:ci
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.SERVER_TAILSCALE_IP }}
+        username: ${{ secrets.SERVER_SSH_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          cd /home/tinyhome/Services
+          podman compose pull sewing-backend
+          podman run --rm \
+            --env-file sewing/.env \
+            -e DATABASE_URL="postgres://$(grep DB_USER sewing/.env | cut -d= -f2):$(grep DB_PASSWORD sewing/.env | cut -d=-f2)@sewing-postgres:5432/$(grep DB_NAME sewing/.env | cut -d= -f2)" \
+            --network immich-network \
+            ghcr.io/fadykuzman/sewing-inventory-app/backend:latest \
+            npx node-pg-migrate up --migration-file-language sql
+          podman compose up -d sewing-backend

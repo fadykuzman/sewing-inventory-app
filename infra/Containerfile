@@ -1,0 +1,45 @@
+# ---- Builder ----
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy root workspace config
+COPY package.json package-lock.json tsconfig.base.json ./
+
+# Copy workspace package.jsons (not frontend)
+COPY shared/package.json shared/package.json
+COPY backend/package.json backend/package.json
+
+# Install dependencies for shared + backend only
+RUN npm ci --workspace=shared --workspace=backend --ignore-scripts
+
+# Build shared first (backend depends on it)
+COPY shared/ shared/
+RUN npm run build --workspace=shared
+
+# Build backend
+COPY backend/ backend/
+RUN npm run build --workspace=backend
+
+# ---- Runner ----
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Copy workspace config for install
+COPY package.json package-lock.json ./
+COPY shared/package.json shared/package.json
+COPY backend/package.json backend/package.json
+
+# Install production deps only
+RUN npm ci --workspace=shared --workspace=backend --omit=dev --ignore-scripts
+
+# Copy compiled output
+COPY --from=builder /app/shared/dist/ shared/dist/
+COPY --from=builder /app/backend/dist/ backend/dist/
+
+# Copy migrations (needed for running them in disposable containers)
+COPY --from=builder /app/backend/migrations/ backend/migrations/
+
+WORKDIR /app/backend
+EXPOSE 3000
+CMD ["node", "dist/index.js"]
