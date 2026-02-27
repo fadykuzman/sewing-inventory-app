@@ -22,14 +22,7 @@ export class FabricService {
   }
 
   async getAllFabrics(): Promise<FabricWithImages[]> {
-    const fabrics = await this.repo.findAll();
-    const withImages = await Promise.all(
-      fabrics.map(async (fabric) => {
-        const images = await this.repo.findImagesByFabricId(fabric.id);
-        return { ...fabric, images };
-      })
-    );
-    return withImages;
+    return this.repo.findAllWithImages();
   }
 
   async getFabricById(id: string): Promise<FabricWithImages | null> {

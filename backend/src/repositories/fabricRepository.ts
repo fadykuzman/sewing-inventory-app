@@ -1,8 +1,8 @@
 import { Pool } from 'pg';
-import { CreateFabricInput, Fabric, FabricImage } from '../types/fabric';
+import { CreateFabricInput, Fabric, FabricImage, FabricWithImages } from '../types/fabric';
 
 export class FabricRepository {
-  constructor(private pool: Pool) {}
+  constructor(private pool: Pool) { }
 
   async insert(data: CreateFabricInput): Promise<Fabric> {
     const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
@@ -29,6 +29,49 @@ export class FabricRepository {
   async findAll(): Promise<Fabric[]> {
     const result = await this.pool.query(`SELECT * FROM fabrics ORDER BY created_at DESC`);
     return result.rows;
+  }
+
+  async findAllWithImages(): Promise<FabricWithImages[]> {
+    const result = await this.pool.query(
+      `SELECT f.*,
+              fi.id AS image_id, fi.file_path, fi."order", fi.created_at AS image_created_at
+       FROM fabrics f
+       LEFT JOIN fabric_images fi ON f.id = fi.fabric_id
+       ORDER BY f.created_at DESC, fi."order" ASC`
+    );
+
+    const fabricMap = new Map<string, FabricWithImages>();
+
+    for (const row of result.rows) {
+      if (!fabricMap.has(row.id)) {
+        fabricMap.set(row.id, {
+          id: row.id,
+          type: row.type,
+          color: row.color,
+          pattern: row.pattern,
+          amount_meters: row.amount_meters,
+          label: row.label,
+          purchase_location: row.purchase_location,
+          cost: row.cost,
+          project_ideas: row.project_ideas,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          images: [],
+        });
+      }
+
+      if (row.image_id) {
+        fabricMap.get(row.id)!.images.push({
+          id: row.image_id,
+          fabric_id: row.id,
+          file_path: row.file_path,
+          order: row.order,
+          created_at: row.image_created_at,
+        });
+      }
+    }
+
+    return Array.from(fabricMap.values());
   }
 
   async findById(id: string): Promise<Fabric | null> {
