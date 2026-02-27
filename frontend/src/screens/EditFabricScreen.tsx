@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, HelperText, IconButton, Text, TextInput } from 'react-native-paper';
+import { ActivityIndicator, Button, Dialog, HelperText, IconButton, Portal, Text, TextInput } from 'react-native-paper';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,8 +17,9 @@ export default function EditFabricScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
   const { formData, setField, populateFromFabric, validate, toJSON } = useFabricForm();
-  const { images: newImages, pickImages, clear: clearImages, appendToFormData } = useImagePicker();
+  const { images: newImages, pickImages, takePhoto, clear: clearImages, appendToFormData } = useImagePicker();
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [imageMenuVisible, setImageMenuVisible] = useState(false);
   const [populated, setPopulated] = useState(false);
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
 
@@ -131,9 +132,26 @@ export default function EditFabricScreen() {
         </View>
       )}
 
-      <Button mode="outlined" onPress={pickImages} style={styles.input}>
+      <Button mode="outlined" onPress={() => setImageMenuVisible(true)} style={styles.input}>
         {newImages.length > 0 ? `${newImages.length} new image(s) selected` : 'Add Images'}
       </Button>
+
+      <Portal>
+        <Dialog visible={imageMenuVisible} onDismiss={() => setImageMenuVisible(false)}>
+          <Dialog.Title>Add Images</Dialog.Title>
+          <Dialog.Content>
+            <Button icon="camera" mode="outlined" onPress={() => { setImageMenuVisible(false); takePhoto(); }} style={styles.dialogButton}>
+              Take Photo
+            </Button>
+            <Button icon="image-multiple" mode="outlined" onPress={() => { setImageMenuVisible(false); pickImages(); }} style={styles.dialogButton}>
+              Choose from Gallery
+            </Button>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setImageMenuVisible(false)}>Cancel</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 
       {validationError && <HelperText type="error" visible>{validationError}</HelperText>}
       {mutation.isError && !validationError && <HelperText type="error" visible>{mutation.error.message}</HelperText>}
@@ -158,4 +176,5 @@ const styles = StyleSheet.create({
   imageContainer: { position: 'relative' },
   thumbnail: { width: 80, height: 80, borderRadius: 4 },
   removeButton: { position: 'absolute', top: -8, right: -8, margin: 0 },
+  dialogButton: { marginBottom: 8 },
 });

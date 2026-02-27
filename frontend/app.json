@@ -13,7 +13,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to take photos of your sewing materials."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,6 +26,14 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "This app uses the camera to take photos of your sewing materials."
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     }

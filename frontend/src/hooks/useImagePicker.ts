@@ -11,7 +11,20 @@ export function useImagePicker() {
       quality: 0.8,
     });
     if (!result.canceled) {
-      setImages(result.assets);
+      setImages(prev => [...prev, ...result.assets]);
+    }
+  }, []);
+
+  const takePhoto = useCallback(async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setImages(prev => [...prev, ...result.assets]);
     }
   }, []);
 
@@ -31,5 +44,5 @@ export function useImagePicker() {
     }
   }
 
-  return { images, pickImages, clear, appendToFormData };
+  return { images, pickImages, takePhoto, clear, appendToFormData };
 }

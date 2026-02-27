@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, HelperText, Text, TextInput } from 'react-native-paper';
+import { Button, Dialog, HelperText, Portal, Text, TextInput } from 'react-native-paper';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,8 +13,9 @@ export default function AddFabricScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
   const { formData, setField, reset, validate, toFormData } = useFabricForm();
-  const { images, pickImages, clear: clearImages, appendToFormData } = useImagePicker();
+  const { images, pickImages, takePhoto, clear: clearImages, appendToFormData } = useImagePicker();
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [imageMenuVisible, setImageMenuVisible] = useState(false);
   const mutation = useMutation({
     mutationFn: createFabric,
     onSuccess: (result) => {
@@ -54,9 +55,26 @@ export default function AddFabricScreen() {
       <TextInput label="Cost" value={formData.cost} onChangeText={v => setField('cost', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Project Ideas" value={formData.projectIdeas} onChangeText={v => setField('projectIdeas', v)} multiline style={styles.input} />
 
-      <Button mode="outlined" onPress={pickImages} style={styles.input}>
+      <Button mode="outlined" onPress={() => setImageMenuVisible(true)} style={styles.input}>
         {images.length > 0 ? `${images.length} image(s) selected` : 'Add Images'}
       </Button>
+
+      <Portal>
+        <Dialog visible={imageMenuVisible} onDismiss={() => setImageMenuVisible(false)}>
+          <Dialog.Title>Add Images</Dialog.Title>
+          <Dialog.Content>
+            <Button icon="camera" mode="outlined" onPress={() => { setImageMenuVisible(false); takePhoto(); }} style={styles.dialogButton}>
+              Take Photo
+            </Button>
+            <Button icon="image-multiple" mode="outlined" onPress={() => { setImageMenuVisible(false); pickImages(); }} style={styles.dialogButton}>
+              Choose from Gallery
+            </Button>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setImageMenuVisible(false)}>Cancel</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 
       <View style={styles.imageRow}>
         {images.map((img, i) => (
@@ -83,4 +101,5 @@ const styles = StyleSheet.create({
   button: { marginTop: 8 },
   imageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   thumbnail: { width: 80, height: 80, borderRadius: 4 },
+  dialogButton: { marginBottom: 8 },
 });
