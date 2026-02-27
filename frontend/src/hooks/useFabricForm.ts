@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { validateCreateFabric } from '@sewing/shared';
+import { Fabric } from '../types/fabric';
 
 interface FabricFormData {
   type: string;
@@ -34,6 +35,19 @@ export function useFabricForm() {
     setFormData(initialFormData);
   }, []);
 
+  const populateFromFabric = useCallback((fabric: Fabric) => {
+    setFormData({
+      type: fabric.type,
+      color: fabric.color ?? '',
+      pattern: fabric.pattern ?? '',
+      amountMeters: String(fabric.amount_meters),
+      label: fabric.label ?? '',
+      purchaseLocation: fabric.purchase_location ?? '',
+      cost: fabric.cost != null ? String(fabric.cost) : '',
+      projectIdeas: fabric.project_ideas ?? '',
+    });
+  }, []);
+
 
 
   function validate(): string[] {
@@ -62,5 +76,19 @@ export function useFabricForm() {
     return fd;
   }
 
-  return { formData, setField, reset, validate, toFormData };
+  function toJSON(): Record<string, string> {
+    const data: Record<string, string> = {
+      type: formData.type.trim(),
+      amount_meters: formData.amountMeters.trim(),
+    };
+    if (formData.color) data.color = formData.color.trim();
+    if (formData.pattern) data.pattern = formData.pattern.trim();
+    if (formData.label) data.label = formData.label.trim();
+    if (formData.purchaseLocation) data.purchase_location = formData.purchaseLocation.trim();
+    if (formData.cost) data.cost = formData.cost.trim();
+    if (formData.projectIdeas) data.project_ideas = formData.projectIdeas.trim();
+    return data;
+  }
+
+  return { formData, setField, reset, populateFromFabric, validate, toFormData, toJSON };
 }

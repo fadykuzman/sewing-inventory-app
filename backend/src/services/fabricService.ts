@@ -66,4 +66,8 @@ export class FabricService {
 
     return { images, warning };
   }
+
+  async updateFabric(id: string, data: CreateFabricInput): Promise<Fabric | null> {
+    return this.repo.update(id, data);
+  }
 }

@@ -94,6 +94,32 @@ export default function fabricsRouter(pool: Pool) {
     }
   });
 
+  router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const errors = validateCreateFabric(req.body);
+      if (errors.length > 0) {
+        res.status(400).json({ success: false, errors });
+        return;
+      }
+
+      const fabric = await fabricService.updateFabric(req.params['id'] as string, req.body);
+      if (!fabric) {
+        res.status(404).json({ success: false, error: 'Fabric not found' });
+        return;
+      }
+
+      const images = await fabricRepo.findImagesByFabricId(fabric.id);
+      const response: ApiResponse<FabricWithImages> = {
+        success: true,
+        data: { ...fabric, images },
+      };
+
+      res.json(response);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const deleted = await fabricService.deleteFabric(req.params['id'] as string);

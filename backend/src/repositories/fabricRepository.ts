@@ -99,4 +99,20 @@ export class FabricRepository {
   async deleteImagesByFabricId(fabricId: string): Promise<void> {
     await this.pool.query(`DELETE FROM fabric_images WHERE fabric_id = $1`, [fabricId]);
   }
+
+  async update(id: string, data: CreateFabricInput): Promise<Fabric | null> {
+    const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
+
+    const result = await this.pool.query(
+      `UPDATE fabrics
+       SET type = $1, color = $2, pattern = $3, amount_meters = $4,
+           label = $5, purchase_location = $6, cost = $7, project_ideas = $8,
+           updated_at = NOW()
+       WHERE id = $9
+       RETURNING *`,
+      [type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, id]
+    );
+
+    return result.rows[0] ?? null;
+  }
 }

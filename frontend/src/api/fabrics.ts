@@ -44,6 +44,23 @@ export async function createFabric(formData: FormData): Promise<ApiResponse<Fabr
   return json;
 }
 
+export async function updateFabric(id: string, data: Record<string, unknown>): Promise<ApiResponse<FabricWithImages>> {
+  const response = await fetch(`${API_URL}/fabrics/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  const json: ApiResponse<FabricWithImages> = await response.json();
+
+  if (!response.ok) {
+    const message = json.errors?.join(' ') ?? json.error ?? 'Failed to update fabric';
+    throw new Error(message);
+  }
+
+  return json;
+}
+
 export async function getFabricsPaginated(limit: number, offset: number): Promise<FabricWithImages[]> {
   const response = await fetch(`${API_URL}/fabrics?limit=${limit}&offset=${offset}`)
   const json: ApiResponse<FabricWithImages[]> = await response.json();

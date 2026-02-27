@@ -8,11 +8,13 @@ import { Text } from 'react-native-paper';
 import FabricListScreen from './src/screens/FabricListScreen';
 import FabricDetailScreen from './src/screens/FabricDetailScreen';
 import AddFabricScreen from './src/screens/AddFabricScreen';
+import EditFabricScreen from './src/screens/EditFabricScreen';
 
 export type RootStackParamList = {
   FabricList: undefined;
   FabricDetail: { id: string };
   AddFabric: undefined;
+  EditFabric: { id: string };
 };
 
 function AddButton({ onPress }: { onPress: () => void }) {
@@ -44,6 +46,7 @@ export default function App() {
             />
             <Stack.Screen name="FabricDetail" component={FabricDetailScreen} options={{ title: 'Fabric Details' }} />
             <Stack.Screen name="AddFabric" component={AddFabricScreen} options={{ title: 'Add Fabric' }} />
+            <Stack.Screen name="EditFabric" component={EditFabricScreen} options={{ title: 'Edit Fabric' }} />
           </Stack.Navigator>
         </NavigationContainer>
         <StatusBar style="auto" />

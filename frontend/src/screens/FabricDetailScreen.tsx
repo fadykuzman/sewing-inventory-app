@@ -3,7 +3,7 @@ import { ScrollView, Image, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Dialog, Divider, Portal, Text } from 'react-native-paper';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getFabricById, deleteFabric, getImageUrl } from '../api/fabrics';
 import type { RootStackParamList } from '../../App';
 
@@ -11,7 +11,7 @@ type RouteProp = NativeStackScreenProps<RootStackParamList, 'FabricDetail'>['rou
 
 export default function FabricDetailScreen() {
   const { params } = useRoute<RouteProp>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
   const [confirmVisible, setConfirmVisible] = useState(false);
 
@@ -58,6 +58,14 @@ export default function FabricDetailScreen() {
         {fabric.purchase_location && <Field label="Purchased at" value={fabric.purchase_location} />}
         {fabric.cost != null && <Field label="Cost" value={`${fabric.cost}`} />}
         {fabric.project_ideas && <Field label="Project ideas" value={fabric.project_ideas} />}
+
+        <Button
+          mode="contained"
+          style={styles.editButton}
+          onPress={() => navigation.navigate('EditFabric', { id: params.id })}
+        >
+          Edit fabric
+        </Button>
 
         <Button
           mode="outlined"
@@ -108,5 +116,6 @@ const styles = StyleSheet.create({
   divider: { marginBottom: 12 },
   field: { marginBottom: 12 },
   label: { opacity: 0.6, marginBottom: 2 },
-  deleteButton: { marginTop: 24, borderColor: 'red' },
+  editButton: { marginTop: 24 },
+  deleteButton: { marginTop: 12, borderColor: 'red' },
 });
