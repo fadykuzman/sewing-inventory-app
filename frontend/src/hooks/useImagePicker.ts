@@ -19,12 +19,15 @@ export function useImagePicker() {
     setImages([]);
   }, []);
 
-  async function appendToFormData(formData: FormData): Promise<void> {
+  function appendToFormData(formData: FormData): void {
     for (const asset of images) {
       const filename = asset.uri.split('/').pop() ?? 'image.jpg';
       const mimeType = asset.mimeType ?? 'image/jpeg';
-      const blob = await fetch(asset.uri).then(r => r.blob());
-      formData.append('images', blob, filename);
+      formData.append('images', {
+        uri: asset.uri,
+        name: filename,
+        type: mimeType,
+      } as unknown as Blob);
     }
   }
 

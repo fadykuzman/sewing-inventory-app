@@ -1,34 +1,35 @@
 import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, HelperText, Text, TextInput } from 'react-native-paper';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createFabric } from '../api/fabrics';
 import { useFabricForm } from '../hooks/useFabricForm';
 import { useImagePicker } from '../hooks/useImagePicker';
+import { RootStackParamList } from '../../App';
 
 export default function AddFabricScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const queryClient = useQueryClient();
   const { formData, setField, reset, validate, toFormData } = useFabricForm();
   const { images, pickImages, clear: clearImages, appendToFormData } = useImagePicker();
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [warning, setWarning] = useState<string | null>(null);
-
   const mutation = useMutation({
     mutationFn: createFabric,
     onSuccess: (result) => {
-      if (result.warning) setWarning(result.warning);
+      queryClient.invalidateQueries({ queryKey: ['fabrics'] });
       reset();
       clearImages();
+      navigation.navigate('FabricDetail', { id: result.data.id });
     },
     onMutate: () => {
       setValidationError(null);
-      setWarning(null);
     },
   });
 
   async function handleSubmit() {
     setValidationError(null);
-    setWarning(null);
-
     const errors = validate();
     if (errors.length > 0) {
       setValidationError(errors.join(' '));
@@ -36,7 +37,7 @@ export default function AddFabricScreen() {
     }
 
     const fd = toFormData();
-    await appendToFormData(fd);
+    appendToFormData(fd);
     mutation.mutate(fd);
   }
 
@@ -65,8 +66,6 @@ export default function AddFabricScreen() {
 
       {validationError && <HelperText type="error" visible>{validationError}</HelperText>}
       {mutation.isError && <HelperText type="error" visible>{mutation.error.message}</HelperText>}
-      {warning && <HelperText type="info" visible>{warning}</HelperText>}
-      {mutation.isSuccess && <HelperText type="info" visible>Fabric added successfully!</HelperText>}
 
       <View style={styles.button}>
         <Button mode="contained" onPress={handleSubmit} loading={mutation.isPending} disabled={mutation.isPending}>

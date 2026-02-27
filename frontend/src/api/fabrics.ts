@@ -1,6 +1,11 @@
 import { ApiResponse, FabricWithImages } from '../types/fabric';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
+const BASE_URL = API_URL.replace('/api/v1', '');
+
+export function getImageUrl(filePath: string): string {
+  return `${BASE_URL}/${filePath}`;
+}
 
 export async function getFabrics(): Promise<FabricWithImages[]> {
   const response = await fetch(`${API_URL}/fabrics`);

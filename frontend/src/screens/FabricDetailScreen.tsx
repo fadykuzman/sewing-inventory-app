@@ -4,7 +4,7 @@ import { ActivityIndicator, Button, Dialog, Divider, Portal, Text } from 'react-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { getFabricById, deleteFabric, API_URL } from '../api/fabrics';
+import { getFabricById, deleteFabric, getImageUrl } from '../api/fabrics';
 import type { RootStackParamList } from '../../App';
 
 type RouteProp = NativeStackScreenProps<RootStackParamList, 'FabricDetail'>['route'];
@@ -36,15 +36,13 @@ export default function FabricDetailScreen() {
     return <View style={styles.centered}><Text>Fabric not found.</Text></View>;
   }
 
-  const baseUrl = API_URL.replace('/api/v1', '');
-
   return (
     <>
       <ScrollView contentContainerStyle={styles.container}>
         {fabric.images.map((img) => (
           <Image
             key={img.id}
-            source={{ uri: `${baseUrl}/${img.file_path}` }}
+            source={{ uri: getImageUrl(img.file_path) }}
             style={styles.image}
             resizeMode="cover"
           />

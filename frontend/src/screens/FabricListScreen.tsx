@@ -3,7 +3,7 @@ import { ActivityIndicator, Card, Text } from 'react-native-paper';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getFabricsPaginated, API_URL } from '../api/fabrics';
+import { getFabricsPaginated, getImageUrl } from '../api/fabrics';
 import { FabricWithImages } from '../types/fabric';
 import type { RootStackParamList } from '../../App';
 
@@ -58,7 +58,7 @@ function FabricCard({ fabric, onPress }: { fabric: FabricWithImages; onPress: ()
   return (
     <Card style={styles.card} onPress={onPress}>
       {thumbnail && (
-        <Card.Cover source={{ uri: `${API_URL.replace('/api/v1', '')}/${thumbnail.file_path}` }} />
+        <Card.Cover source={{ uri: getImageUrl(thumbnail.file_path) }} />
       )}
       <Card.Content style={styles.cardContent}>
         <Text variant="titleMedium">{fabric.type}</Text>
