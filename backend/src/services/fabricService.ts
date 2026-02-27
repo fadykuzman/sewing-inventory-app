@@ -1,7 +1,6 @@
-import fs from 'fs/promises';
-import path from 'path';
 import { FabricRepository } from '../repositories/fabricRepository';
 import { CreateFabricInput, Fabric, FabricImage, FabricWithImages } from '../types/fabric';
+import { FileStorageService } from './fileStorageService';
 
 interface ImageFile {
   filename: string;
@@ -13,7 +12,10 @@ interface SaveImagesResult {
 }
 
 export class FabricService {
-  constructor(private repo: FabricRepository) {}
+  constructor(
+    private repo: FabricRepository,
+    private fileStorage: FileStorageService
+  ) { }
 
   async createFabric(data: CreateFabricInput): Promise<Fabric> {
     return this.repo.insert(data);
@@ -46,7 +48,7 @@ export class FabricService {
     if (deleted) {
       await Promise.allSettled(
         images.map((img) =>
-          fs.unlink(path.join(process.cwd(), img.file_path))
+          this.fileStorage.deleteFile(img.file_path)
         )
       );
     }
@@ -61,7 +63,7 @@ export class FabricService {
     try {
       images = await Promise.all(
         files.map((file, index) =>
-          this.repo.insertImage(fabricId, `/uploads/fabrics/${file.filename}`, index)
+          this.repo.insertImage(fabricId, this.fileStorage.getUploadPath(file.filename), index)
         )
       );
     } catch (err) {

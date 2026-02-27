@@ -6,6 +6,7 @@ import { FabricRepository } from '../repositories/fabricRepository';
 import { FabricService } from '../services/fabricService';
 import { Pool } from 'pg';
 import { ApiResponse, FabricWithImages } from '../types/fabric';
+import { LocalFileStorageService } from '../services/fileStorageService';
 
 const storage = multer.diskStorage({
   destination: 'uploads/fabrics/',
@@ -37,7 +38,8 @@ const upload = multer({
 export default function fabricsRouter(pool: Pool) {
   const router = Router();
   const fabricRepo = new FabricRepository(pool);
-  const fabricService = new FabricService(fabricRepo);
+  const fileStorage = new LocalFileStorageService();
+  const fabricService = new FabricService(fabricRepo, fileStorage);
 
   router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     try {
