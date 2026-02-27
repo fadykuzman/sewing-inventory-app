@@ -7,6 +7,7 @@ import { FabricService } from '../services/fabricService';
 import { Pool } from 'pg';
 import { ApiResponse, FabricWithImages } from '../types/fabric';
 import { LocalFileStorageService } from '../services/fileStorageService';
+import { parsePagination } from '../validation/paginationValidation'
 
 const storage = multer.diskStorage({
   destination: 'uploads/fabrics/',
@@ -43,7 +44,8 @@ export default function fabricsRouter(pool: Pool) {
 
   router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const fabrics = await fabricService.getAllFabrics();
+      const { limit, offset } = parsePagination(_req.query);
+      const fabrics = await fabricService.getAllFabrics(limit, offset);
       const response: ApiResponse<FabricWithImages[]> = { success: true, data: fabrics };
       res.json(response);
     } catch (err) {

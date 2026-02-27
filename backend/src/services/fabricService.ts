@@ -21,8 +21,8 @@ export class FabricService {
     return this.repo.insert(data);
   }
 
-  async getAllFabrics(): Promise<FabricWithImages[]> {
-    return this.repo.findAllWithImages();
+  async getAllFabrics(limit: number, offset: number): Promise<FabricWithImages[]> {
+    return this.repo.findAllWithImages(limit, offset);
   }
 
   async getFabricById(id: string): Promise<FabricWithImages | null> {

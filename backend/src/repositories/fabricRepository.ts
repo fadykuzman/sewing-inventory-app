@@ -31,13 +31,17 @@ export class FabricRepository {
     return result.rows;
   }
 
-  async findAllWithImages(): Promise<FabricWithImages[]> {
+  async findAllWithImages(limit: number, offset: number): Promise<FabricWithImages[]> {
     const result = await this.pool.query(
       `SELECT f.*,
               fi.id AS image_id, fi.file_path, fi."order", fi.created_at AS image_created_at
        FROM fabrics f
        LEFT JOIN fabric_images fi ON f.id = fi.fabric_id
-       ORDER BY f.created_at DESC, fi."order" ASC`
+       WHERE f.id IN (
+         SELECT id FROM fabrics ORDER BY create_at DESC LIMIT $1 OFFSE $2
+       )
+       ORDER BY f.created_at DESC, fi."order" ASC`,
+      [limit, offset]
     );
 
     const fabricMap = new Map<string, FabricWithImages>();
