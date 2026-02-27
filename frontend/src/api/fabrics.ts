@@ -37,3 +37,10 @@ export async function createFabric(formData: FormData): Promise<ApiResponse<Fabr
 
   return json;
 }
+
+export async function getFabricsPaginated(limit: number, offset: number): Promise<FabricWithImages[]> {
+  const response = await fetch(`${API_URL}/fabrics?limit=${limit}&offset=${offset}`)
+  const json: ApiResponse<FabricWithImages[]> = await response.json();
+  if (!response.ok) throw new Error(json.error ?? 'Failed to fetch fabrics');
+  return json.data!;
+}

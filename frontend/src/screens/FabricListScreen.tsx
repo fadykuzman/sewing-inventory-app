@@ -1,9 +1,9 @@
 import { FlatList, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Card, Text } from 'react-native-paper';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getFabrics, API_URL } from '../api/fabrics';
+import { getFabricsPaginated, API_URL } from '../api/fabrics';
 import { FabricWithImages } from '../types/fabric';
 import type { RootStackParamList } from '../../App';
 
@@ -11,10 +11,18 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'FabricList'
 
 export default function FabricListScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { data: fabrics, isLoading, isError, refetch, isRefetching } = useQuery({
+  const PAGE_SIZE = 20;
+  const { data, isLoading, isError, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['fabrics'],
-    queryFn: getFabrics,
+    queryFn: ({ pageParam = 0 }) => getFabricsPaginated(PAGE_SIZE, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      return allPages.flat().length;
+    }
   });
+
+  const fabrics = data?.pages.flat() ?? [];
 
   if (isLoading) {
     return <View style={styles.centered}><ActivityIndicator /></View>;
@@ -24,7 +32,7 @@ export default function FabricListScreen() {
     return <View style={styles.centered}><Text>Failed to load fabrics.</Text></View>;
   }
 
-  if (!fabrics || fabrics.length === 0) {
+  if (!isLoading && fabrics.length === 0) {
     return <View style={styles.centered}><Text>No fabrics yet. Add one!</Text></View>;
   }
 
@@ -36,6 +44,9 @@ export default function FabricListScreen() {
       contentContainerStyle={styles.list}
       refreshing={isRefetching}
       onRefresh={refetch}
+      onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: 16 }} /> : null}
       renderItem={({ item }) => <FabricCard fabric={item} onPress={() => navigation.navigate('FabricDetail', { id: item.id })} />}
     />
   );
