@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { validateCreateFabric } from '@sewing/shared';
 
 interface FabricFormData {
   type: string;
@@ -33,20 +34,19 @@ export function useFabricForm() {
     setFormData(initialFormData);
   }, []);
 
+
+
   function validate(): string[] {
-    const errors: string[] = [];
-
-    if (!formData.type.trim()) {
-      errors.push('Fabric type is required.');
-    }
-    if (!formData.amountMeters.trim() || isNaN(Number(formData.amountMeters)) || Number(formData.amountMeters) <= 0) {
-      errors.push('Amount (meters) is required and must be a positive number.');
-    }
-    if (formData.cost && (isNaN(Number(formData.cost)) || Number(formData.cost) < 0)) {
-      errors.push('Cost must be a non-negative number.');
-    }
-
-    return errors;
+    return validateCreateFabric({
+      type: formData.type,
+      amount_meters: formData.amountMeters,
+      cost: formData.cost || undefined,
+      color: formData.color || undefined,
+      pattern: formData.pattern || undefined,
+      label: formData.label || undefined,
+      purchase_location: formData.purchaseLocation || undefined,
+      project_ideas: formData.projectIdeas || undefined,
+    });
   }
 
   function toFormData(): FormData {

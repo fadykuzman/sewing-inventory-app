@@ -1,4 +1,4 @@
-import { validateCreateFabric } from '../../validation/fabricValidation';
+import { validateCreateFabric } from '@sewing/shared';
 
 describe('validateCreateFabric', () => {
   it('returns error when type is missing', () => {

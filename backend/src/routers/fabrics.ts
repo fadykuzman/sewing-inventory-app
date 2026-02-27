@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
-import { validateCreateFabric } from '../validation/fabricValidation';
+import { validateCreateFabric } from '@sewing/shared';
 import { FabricRepository } from '../repositories/fabricRepository';
 import { FabricService } from '../services/fabricService';
 import { Pool } from 'pg';
