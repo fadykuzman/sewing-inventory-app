@@ -38,7 +38,7 @@ export class FabricRepository {
        FROM fabrics f
        LEFT JOIN fabric_images fi ON f.id = fi.fabric_id
        WHERE f.id IN (
-         SELECT id FROM fabrics ORDER BY create_at DESC LIMIT $1 OFFSE $2
+         SELECT id FROM fabrics ORDER BY created_at DESC LIMIT $1 OFFSET $2
        )
        ORDER BY f.created_at DESC, fi."order" ASC`,
       [limit, offset]
