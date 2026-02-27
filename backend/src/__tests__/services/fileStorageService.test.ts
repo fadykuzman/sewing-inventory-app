@@ -35,8 +35,8 @@ describe('LocalFileStorageService', () => {
   })
 
   describe('getUploadPath', () => {
-    it('returns the path prefixed with /uploads/fabrics/', () => {
-      expect(service.getUploadPath('image.jpg')).toBe('/uploads/fabrics/image.jpg');
+    it('returns the path prefixed with uploads/fabrics/', () => {
+      expect(service.getUploadPath('image.jpg')).toBe('uploads/fabrics/image.jpg');
     })
   })
 

@@ -13,6 +13,6 @@ export class LocalFileStorageService implements FileStorageService {
   }
 
   getUploadPath(filename: string): string {
-    return `/uploads/fabrics/${filename}`;
+    return `uploads/fabrics/${filename}`;
   }
 }

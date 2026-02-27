@@ -4,7 +4,8 @@ export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080
 const BASE_URL = API_URL.replace('/api/v1', '');
 
 export function getImageUrl(filePath: string): string {
-  return `${BASE_URL}/${filePath}`;
+  const normalizedPath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+  return `${BASE_URL}/${normalizedPath}`;
 }
 
 export async function getFabrics(): Promise<FabricWithImages[]> {
