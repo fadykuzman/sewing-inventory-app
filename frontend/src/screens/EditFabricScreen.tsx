@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, HelperText, Text, TextInput } from 'react-native-paper';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Button, HelperText, IconButton, Text, TextInput } from 'react-native-paper';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
-import { getFabricById, updateFabric } from '../api/fabrics';
+import { addFabricImages, getFabricById, getImageUrl, removeFabricImages, updateFabric } from '../api/fabrics';
 import { useFabricForm } from '../hooks/useFabricForm';
+import { useImagePicker } from '../hooks/useImagePicker';
+import { FabricImage } from '../types/fabric';
 import type { RootStackParamList } from '../../App';
 
 type RouteProp = NativeStackScreenProps<RootStackParamList, 'EditFabric'>['route'];
@@ -15,8 +17,10 @@ export default function EditFabricScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
   const { formData, setField, populateFromFabric, validate, toJSON } = useFabricForm();
+  const { images: newImages, pickImages, clear: clearImages, appendToFormData } = useImagePicker();
   const [validationError, setValidationError] = useState<string | null>(null);
   const [populated, setPopulated] = useState(false);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
 
   const { data: fabric, isLoading, isError } = useQuery({
     queryKey: ['fabric', params.id],
@@ -30,8 +34,33 @@ export default function EditFabricScreen() {
     }
   }, [fabric, populated, populateFromFabric]);
 
+  const existingImages = (fabric?.images ?? []).filter(
+    (img) => !removedImageIds.includes(img.id)
+  );
+
+  function markForRemoval(imageId: string) {
+    setRemovedImageIds((prev) => [...prev, imageId]);
+  }
+
   const mutation = useMutation({
-    mutationFn: (data: Record<string, string>) => updateFabric(params.id, data),
+    mutationFn: async () => {
+      const errors = validate();
+      if (errors.length > 0) {
+        throw new Error(errors.join(' '));
+      }
+
+      await updateFabric(params.id, toJSON());
+
+      if (removedImageIds.length > 0) {
+        await removeFabricImages(params.id, removedImageIds);
+      }
+
+      if (newImages.length > 0) {
+        const fd = new FormData();
+        appendToFormData(fd);
+        await addFabricImages(params.id, fd);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fabrics'] });
       queryClient.invalidateQueries({ queryKey: ['fabric', params.id] });
@@ -39,6 +68,9 @@ export default function EditFabricScreen() {
     },
     onMutate: () => {
       setValidationError(null);
+    },
+    onError: (err: Error) => {
+      setValidationError(err.message);
     },
   });
 
@@ -49,7 +81,7 @@ export default function EditFabricScreen() {
       setValidationError(errors.join(' '));
       return;
     }
-    mutation.mutate(toJSON());
+    mutation.mutate();
   }
 
   if (isLoading) {
@@ -73,8 +105,38 @@ export default function EditFabricScreen() {
       <TextInput label="Cost" value={formData.cost} onChangeText={v => setField('cost', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Project Ideas" value={formData.projectIdeas} onChangeText={v => setField('projectIdeas', v)} multiline style={styles.input} />
 
+      <Text variant="titleMedium" style={styles.sectionTitle}>Images</Text>
+
+      {existingImages.length > 0 && (
+        <View style={styles.imageRow}>
+          {existingImages.map((img) => (
+            <View key={img.id} style={styles.imageContainer}>
+              <Image source={{ uri: getImageUrl(img.file_path) }} style={styles.thumbnail} />
+              <IconButton
+                icon="close-circle"
+                size={20}
+                style={styles.removeButton}
+                onPress={() => markForRemoval(img.id)}
+              />
+            </View>
+          ))}
+        </View>
+      )}
+
+      {newImages.length > 0 && (
+        <View style={styles.imageRow}>
+          {newImages.map((img, i) => (
+            <Image key={i} source={{ uri: img.uri }} style={styles.thumbnail} />
+          ))}
+        </View>
+      )}
+
+      <Button mode="outlined" onPress={pickImages} style={styles.input}>
+        {newImages.length > 0 ? `${newImages.length} new image(s) selected` : 'Add Images'}
+      </Button>
+
       {validationError && <HelperText type="error" visible>{validationError}</HelperText>}
-      {mutation.isError && <HelperText type="error" visible>{mutation.error.message}</HelperText>}
+      {mutation.isError && !validationError && <HelperText type="error" visible>{mutation.error.message}</HelperText>}
 
       <View style={styles.button}>
         <Button mode="contained" onPress={handleSubmit} loading={mutation.isPending} disabled={mutation.isPending}>
@@ -89,6 +151,11 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   container: { padding: 16 },
   title: { marginBottom: 16 },
+  sectionTitle: { marginTop: 8, marginBottom: 8 },
   input: { marginBottom: 12 },
   button: { marginTop: 8 },
+  imageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  imageContainer: { position: 'relative' },
+  thumbnail: { width: 80, height: 80, borderRadius: 4 },
+  removeButton: { position: 'absolute', top: -8, right: -8, margin: 0 },
 });

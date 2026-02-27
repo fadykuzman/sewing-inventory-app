@@ -5,7 +5,7 @@ import { validateCreateFabric } from '@sewing/shared';
 import { FabricRepository } from '../repositories/fabricRepository';
 import { FabricService } from '../services/fabricService';
 import { Pool } from 'pg';
-import { ApiResponse, FabricWithImages } from '../types/fabric';
+import { ApiResponse, FabricImage, FabricWithImages } from '../types/fabric';
 import { LocalFileStorageService } from '../services/fileStorageService';
 import { parsePagination } from '../validation/paginationValidation'
 
@@ -116,6 +116,58 @@ export default function fabricsRouter(pool: Pool) {
       };
 
       res.json(response);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/:id/images', upload.array('images', MAX_IMAGE_COUNT), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const fabricId = req.params['id'] as string;
+      const fabric = await fabricService.getFabricById(fabricId);
+      if (!fabric) {
+        res.status(404).json({ success: false, error: 'Fabric not found' });
+        return;
+      }
+
+      const files = (req.files as Express.Multer.File[]) ?? [];
+      if (files.length === 0) {
+        res.status(400).json({ success: false, error: 'No images provided' });
+        return;
+      }
+
+      const { images, warning } = await fabricService.addImages(fabricId, files);
+
+      const response: ApiResponse<FabricImage[]> = {
+        success: true,
+        data: images,
+        ...(warning && { warning }),
+      };
+
+      res.status(201).json(response);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.delete('/:id/images', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const fabricId = req.params['id'] as string;
+      const fabric = await fabricService.getFabricById(fabricId);
+      if (!fabric) {
+        res.status(404).json({ success: false, error: 'Fabric not found' });
+        return;
+      }
+
+      const { imageIds } = req.body;
+      if (!Array.isArray(imageIds) || imageIds.length === 0) {
+        res.status(400).json({ success: false, error: 'imageIds must be a non-empty array' });
+        return;
+      }
+
+      await fabricService.removeImages(fabricId, imageIds);
+
+      res.json({ success: true });
     } catch (err) {
       next(err);
     }

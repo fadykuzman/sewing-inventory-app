@@ -112,6 +112,23 @@ export class FabricRepository {
     await this.pool.query(`DELETE FROM fabric_images WHERE fabric_id = $1`, [fabricId]);
   }
 
+  async getMaxImageOrder(fabricId: string): Promise<number> {
+    const result = await this.pool.query(
+      `SELECT COALESCE(MAX("order"), -1) AS max_order FROM fabric_images WHERE fabric_id = $1`,
+      [fabricId]
+    );
+    return result.rows[0].max_order;
+  }
+
+  async deleteImagesByIds(fabricId: string, imageIds: string[]): Promise<FabricImage[]> {
+    const placeholders = imageIds.map((_, i) => `$${i + 2}`).join(', ');
+    const result = await this.pool.query(
+      `DELETE FROM fabric_images WHERE fabric_id = $1 AND id IN (${placeholders}) RETURNING *`,
+      [fabricId, ...imageIds]
+    );
+    return result.rows;
+  }
+
   async update(id: string, data: CreateFabricInput): Promise<Fabric | null> {
     const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
 

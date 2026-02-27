@@ -67,19 +67,21 @@ export default function FabricListScreen() {
   }
 
   return (
-    <FlatList
-      data={fabrics}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.list}
-      refreshing={isRefetching}
-      onRefresh={refetch}
-      onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
-      onEndReachedThreshold={0.5}
-      ListHeaderComponent={listHeader}
-      ListEmptyComponent={<View style={styles.centered}><Text>No fabrics found.</Text></View>}
-      ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: 16 }} /> : null}
-      renderItem={({ item }) => <FabricCard fabric={item} onPress={() => navigation.navigate('FabricDetail', { id: item.id })} />}
-    />
+    <View style={styles.container}>
+      {listHeader}
+      <FlatList
+        data={fabrics}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        refreshing={isRefetching}
+        onRefresh={refetch}
+        onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={<View style={styles.centered}><Text>No fabrics found.</Text></View>}
+        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: 16 }} /> : null}
+        renderItem={({ item }) => <FabricCard fabric={item} onPress={() => navigation.navigate('FabricDetail', { id: item.id })} />}
+      />
+    </View>
   );
 }
 

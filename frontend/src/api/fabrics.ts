@@ -1,4 +1,4 @@
-import { ApiResponse, FabricWithImages } from '../types/fabric';
+import { ApiResponse, FabricImage, FabricWithImages } from '../types/fabric';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
 const BASE_URL = API_URL.replace('/api/v1', '');
@@ -59,6 +59,32 @@ export async function updateFabric(id: string, data: Record<string, unknown>): P
   }
 
   return json;
+}
+
+export async function addFabricImages(fabricId: string, formData: FormData): Promise<ApiResponse<FabricImage[]>> {
+  const response = await fetch(`${API_URL}/fabrics/${fabricId}/images`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const json: ApiResponse<FabricImage[]> = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json.error ?? 'Failed to upload images');
+  }
+
+  return json;
+}
+
+export async function removeFabricImages(fabricId: string, imageIds: string[]): Promise<void> {
+  const response = await fetch(`${API_URL}/fabrics/${fabricId}/images`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageIds }),
+  });
+
+  const json: ApiResponse<never> = await response.json();
+  if (!response.ok) throw new Error(json.error ?? 'Failed to remove images');
 }
 
 export async function getFabricsPaginated(limit: number, offset: number, search?: string): Promise<FabricWithImages[]> {

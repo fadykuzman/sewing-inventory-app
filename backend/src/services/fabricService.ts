@@ -67,6 +67,33 @@ export class FabricService {
     return { images, warning };
   }
 
+  async addImages(fabricId: string, files: ImageFile[]): Promise<SaveImagesResult> {
+    const maxOrder = await this.repo.getMaxImageOrder(fabricId);
+    let images: FabricImage[] = [];
+    let warning: string | undefined;
+
+    try {
+      images = await Promise.all(
+        files.map((file, index) =>
+          this.repo.insertImage(fabricId, this.fileStorage.getUploadPath(file.filename), maxOrder + 1 + index)
+        )
+      );
+    } catch (err) {
+      console.error(`[FabricService] Image add failed for fabric ${fabricId}:`, err);
+      warning = 'Some images failed to upload. You can retry uploading them.';
+    }
+
+    return { images, warning };
+  }
+
+  async removeImages(fabricId: string, imageIds: string[]): Promise<void> {
+    const deleted = await this.repo.deleteImagesByIds(fabricId, imageIds);
+
+    await Promise.allSettled(
+      deleted.map((img) => this.fileStorage.deleteFile(img.file_path))
+    );
+  }
+
   async updateFabric(id: string, data: CreateFabricInput): Promise<Fabric | null> {
     return this.repo.update(id, data);
   }
