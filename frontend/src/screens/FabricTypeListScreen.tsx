@@ -26,7 +26,7 @@ export default function FabricTypeListScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: types, isLoading, isError } = useQuery({
+  const { data: types, isLoading, isError, isRefetching, refetch } = useQuery({
     queryKey: ['fabricTypes'],
     queryFn: getFabricTypes,
   });
@@ -71,6 +71,8 @@ export default function FabricTypeListScreen() {
         keyExtractor={(item) => String(item.id)}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={<View style={styles.centered}><Text>No fabric types found.</Text></View>}
+        refreshing={isRefetching}
+        onRefresh={refetch}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <Card style={styles.card} onPress={() => navigation.navigate('FabricsByType', { typeId: item.id, typeName: item.name })}>

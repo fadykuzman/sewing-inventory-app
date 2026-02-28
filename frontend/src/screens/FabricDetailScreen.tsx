@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, Image, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, Image, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Dialog, Divider, Portal, Text } from 'react-native-paper';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -15,7 +15,7 @@ export default function FabricDetailScreen() {
   const queryClient = useQueryClient();
   const [confirmVisible, setConfirmVisible] = useState(false);
 
-  const { data: fabric, isLoading, isError } = useQuery({
+  const { data: fabric, isLoading, isError, isRefetching, refetch } = useQuery({
     queryKey: ['fabric', params.id],
     queryFn: () => getFabricById(params.id),
   });
@@ -38,7 +38,10 @@ export default function FabricDetailScreen() {
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+      >
         {fabric.images.map((img) => (
           <Image
             key={img.id}

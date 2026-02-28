@@ -106,7 +106,13 @@ export class FabricRepository {
   }
 
   async findById(id: string): Promise<Fabric | null> {
-    const result = await this.pool.query(`SELECT * FROM fabrics WHERE id = $1`, [id]);
+    const result = await this.pool.query(
+      `SELECT f.*, ft.name_en AS fabric_type_name
+       FROM fabrics f
+       JOIN fabric_types ft ON f.fabric_type_id = ft.id
+       WHERE f.id = $1`,
+      [id]
+    );
     return result.rows[0] ?? null;
   }
 
