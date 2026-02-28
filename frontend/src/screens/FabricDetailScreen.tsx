@@ -54,7 +54,7 @@ export default function FabricDetailScreen() {
         {fabric.pattern && <Field label="Pattern" value={fabric.pattern} />}
         {fabric.label && <Field label="Brand" value={fabric.label} />}
         {fabric.purchase_location && <Field label="Purchased at" value={fabric.purchase_location} />}
-        {fabric.cost != null && <Field label="Cost" value={`${fabric.cost}`} />}
+        {fabric.cost != null && <Field label="Cost per meter" value={`${fabric.cost} €/m`} />}
         {fabric.project_ideas && <Field label="Project ideas" value={fabric.project_ideas} />}
 
         <Divider style={styles.divider} />
