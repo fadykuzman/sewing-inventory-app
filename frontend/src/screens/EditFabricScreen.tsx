@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Keyboard, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Dialog, HelperText, IconButton, Portal, Text, TextInput, TouchableRipple } from 'react-native-paper';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -23,6 +23,21 @@ export default function EditFabricScreen() {
   const [imageMenuVisible, setImageMenuVisible] = useState(false);
   const [populated, setPopulated] = useState(false);
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <IconButton icon="camera-plus" onPress={() => setImageMenuVisible(true)} />
+      ),
+    });
+  }, [navigation]);
 
   const { data: fabricTypes = [] } = useQuery({
     queryKey: ['fabricTypes'],
@@ -120,10 +135,7 @@ export default function EditFabricScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text variant="headlineMedium" style={styles.title}>Edit Fabric</Text>
-
+    <ScrollView contentContainerStyle={[styles.container, { paddingBottom: keyboardHeight + 32 }]} keyboardShouldPersistTaps="handled">
       <TextInput label="Name *" value={formData.name} onChangeText={v => setField('name', v)} style={styles.input} />
       <View style={styles.input}>
         <TextInput
@@ -178,10 +190,6 @@ export default function EditFabricScreen() {
         </View>
       )}
 
-      <Button mode="outlined" onPress={() => setImageMenuVisible(true)} style={styles.input}>
-        {newImages.length > 0 ? `${newImages.length} new image(s) selected` : 'Add Images'}
-      </Button>
-
       <Portal>
         <Dialog visible={imageMenuVisible} onDismiss={() => setImageMenuVisible(false)}>
           <Dialog.Title>Add Images</Dialog.Title>
@@ -208,14 +216,13 @@ export default function EditFabricScreen() {
         </Button>
       </View>
     </ScrollView>
-    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  container: { padding: 16 },
+  container: { padding: 16, paddingBottom: 32 },
   title: { marginBottom: 16 },
   sectionTitle: { marginTop: 8, marginBottom: 8 },
   input: { marginBottom: 12 },

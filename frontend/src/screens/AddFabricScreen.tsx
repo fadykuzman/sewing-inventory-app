@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, Dialog, HelperText, Menu, Portal, Text, TextInput, TouchableRipple } from 'react-native-paper';
+import { Image, Keyboard, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Dialog, HelperText, IconButton, Menu, Portal, Text, TextInput, TouchableRipple } from 'react-native-paper';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -55,6 +55,21 @@ export default function AddFabricScreen() {
   }
   const [validationError, setValidationError] = useState<string | null>(null);
   const [imageMenuVisible, setImageMenuVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <IconButton icon="camera-plus" onPress={() => setImageMenuVisible(true)} />
+      ),
+    });
+  }, [navigation]);
   const mutation = useMutation({
     mutationFn: createFabric,
     onSuccess: (result) => {
@@ -82,8 +97,7 @@ export default function AddFabricScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={[styles.container, { paddingBottom: keyboardHeight + 32 }]} keyboardShouldPersistTaps="handled">
       <TextInput label="Name *" value={formData.name} onChangeText={v => setField('name', v)} style={styles.input} />
       <View style={styles.input}>
         <TextInput
@@ -111,10 +125,6 @@ export default function AddFabricScreen() {
       <TextInput label="Purchase Location" value={formData.purchaseLocation} onChangeText={v => setField('purchaseLocation', v)} style={styles.input} />
       <TextInput label="Cost" value={formData.cost} onChangeText={v => setField('cost', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Project Ideas" value={formData.projectIdeas} onChangeText={v => setField('projectIdeas', v)} multiline style={styles.input} />
-
-      <Button mode="outlined" onPress={() => setImageMenuVisible(true)} style={styles.input}>
-        {images.length > 0 ? `${images.length} image(s) selected` : 'Add Images'}
-      </Button>
 
       <Portal>
         <Dialog visible={imageMenuVisible} onDismiss={() => setImageMenuVisible(false)}>
@@ -148,13 +158,12 @@ export default function AddFabricScreen() {
         </Button>
       </View>
     </ScrollView>
-    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { padding: 16 },
+  container: { padding: 16, paddingBottom: 32 },
   title: { marginBottom: 16 },
   input: { marginBottom: 12 },
   button: { marginTop: 8 },
