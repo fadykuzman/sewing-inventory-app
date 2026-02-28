@@ -66,10 +66,10 @@ export default function FabricTypeListScreen() {
 
   return (
     <View style={styles.container}>
+      {listHeader}
       <FlatList
         data={filtered}
         keyExtractor={(item) => String(item.id)}
-        ListHeaderComponent={listHeader}
         ListEmptyComponent={<View style={styles.centered}><Text>No fabric types found.</Text></View>}
         refreshing={isRefetching}
         onRefresh={refetch}
