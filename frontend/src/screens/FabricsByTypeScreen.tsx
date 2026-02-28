@@ -1,5 +1,5 @@
 import { FlatList, Image, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Card, Icon, Text } from 'react-native-paper';
+import { ActivityIndicator, Card, FAB, Icon, Text } from 'react-native-paper';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -58,6 +58,14 @@ export default function FabricsByTypeScreen() {
           <FabricCard fabric={item} onPress={() => navigation.navigate('FabricDetail', { id: item.id })} />
         )}
       />
+      <FAB
+        icon="plus"
+        style={styles.fab}
+        onPress={() => navigation.navigate('AddFabric', {
+          preselectedTypeId: typeId,
+          preselectedTypeName: typeName,
+        })}
+      />
     </View>
   );
 }
@@ -90,7 +98,8 @@ function FabricCard({ fabric, onPress }: { fabric: FabricWithImages; onPress: ()
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  list: { padding: 16, gap: 12 },
+  list: { padding: 16, paddingBottom: 80, gap: 12 },
+  fab: { position: 'absolute', right: 16, bottom: 16 },
   card: { marginBottom: 4 },
   cardRow: { flexDirection: 'row', alignItems: 'center' },
   textContent: { flex: 1, gap: 10 },
