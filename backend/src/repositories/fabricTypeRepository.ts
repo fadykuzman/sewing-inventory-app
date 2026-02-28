@@ -6,7 +6,11 @@ export class FabricTypeRepository {
 
   async findAll(): Promise<FabricType[]> {
     const result = await this.pool.query(
-      `SELECT * FROM fabric_types ORDER BY name_en ASC`
+      `SELECT ft.*, COUNT(f.id)::int AS fabric_count
+       FROM fabric_types ft
+       LEFT JOIN fabrics f ON f.fabric_type_id = ft.id
+       GROUP BY ft.id
+       ORDER BY ft.name_en ASC`
     );
     return result.rows;
   }

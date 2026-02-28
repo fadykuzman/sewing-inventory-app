@@ -83,8 +83,6 @@ export default function AddFabricScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text variant="headlineMedium" style={styles.title}>Add Fabric</Text>
-
       <View style={styles.input}>
         <TextInput
           label="Fabric Type *"
