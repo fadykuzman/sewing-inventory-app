@@ -1,9 +1,11 @@
 export const VALIDATION_CONSTANTS = {
+  MAX_NAME: 255,
   MAX_SHORT: 100,
   MAX_LONG: 1000,
 } as const;
 
 export interface RawFabricInput {
+  name?: string;
   fabric_type_id?: string | number;
   color?: string;
   pattern?: string;
@@ -23,6 +25,12 @@ const OPTIONAL_SHORT_FIELDS: { field: keyof RawFabricInput; label: string }[] = 
 
 export function validateCreateFabric(body: RawFabricInput): string[] {
   const errors: string[] = [];
+
+  if (body.name == null || typeof body.name !== 'string' || body.name.trim() === '') {
+    errors.push('Name is required.');
+  } else if (body.name.trim().length > VALIDATION_CONSTANTS.MAX_NAME) {
+    errors.push(`Name must be ${VALIDATION_CONSTANTS.MAX_NAME} characters or less.`);
+  }
 
   if (body.fabric_type_id == null || body.fabric_type_id === '') {
     errors.push('Fabric type is required.');

@@ -5,13 +5,13 @@ export class FabricRepository {
   constructor(private pool: Pool) { }
 
   async insert(data: CreateFabricInput): Promise<Fabric> {
-    const { fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
+    const { name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
 
     const result = await this.pool.query(
-      `INSERT INTO fabrics (fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO fabrics (name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas]
+      [name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas]
     );
 
     return result.rows[0];
@@ -39,7 +39,7 @@ export class FabricRepository {
       params.push(`%${search}%`);
       const searchIdx = params.length;
       conditions.push(
-        `(ft.name_en ILIKE $${searchIdx} OR ft.name ILIKE $${searchIdx} OR color ILIKE $${searchIdx} OR pattern ILIKE $${searchIdx} OR label ILIKE $${searchIdx} OR purchase_location ILIKE $${searchIdx})`
+        `(f.name ILIKE $${searchIdx} OR ft.name_en ILIKE $${searchIdx} OR ft.name ILIKE $${searchIdx} OR color ILIKE $${searchIdx} OR pattern ILIKE $${searchIdx} OR label ILIKE $${searchIdx} OR purchase_location ILIKE $${searchIdx})`
       );
     }
 
@@ -75,6 +75,7 @@ export class FabricRepository {
       if (!fabricMap.has(row.id)) {
         fabricMap.set(row.id, {
           id: row.id,
+          name: row.name,
           fabric_type_id: row.fabric_type_id,
           fabric_type_name: row.fabric_type_name,
           color: row.color,
@@ -143,17 +144,28 @@ export class FabricRepository {
     return result.rows;
   }
 
+  async findByTypeAndName(fabricTypeId: number, name: string, excludeId?: string): Promise<Fabric | null> {
+    const params: (string | number)[] = [fabricTypeId, name];
+    let sql = `SELECT * FROM fabrics WHERE fabric_type_id = $1 AND name = $2`;
+    if (excludeId) {
+      params.push(excludeId);
+      sql += ` AND id != $3`;
+    }
+    const result = await this.pool.query(sql, params);
+    return result.rows[0] ?? null;
+  }
+
   async update(id: string, data: CreateFabricInput): Promise<Fabric | null> {
-    const { fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
+    const { name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
 
     const result = await this.pool.query(
       `UPDATE fabrics
-       SET fabric_type_id = $1, color = $2, pattern = $3, amount_meters = $4,
-           label = $5, purchase_location = $6, cost = $7, project_ideas = $8,
+       SET name = $1, fabric_type_id = $2, color = $3, pattern = $4, amount_meters = $5,
+           label = $6, purchase_location = $7, cost = $8, project_ideas = $9,
            updated_at = NOW()
-       WHERE id = $9
+       WHERE id = $10
        RETURNING *`,
-      [fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, id]
+      [name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, id]
     );
 
     return result.rows[0] ?? null;

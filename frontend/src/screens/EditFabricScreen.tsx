@@ -142,6 +142,7 @@ export default function EditFabricScreen() {
           </ScrollView>
         )}
       </View>
+      <TextInput label="Name *" value={formData.name} onChangeText={v => setField('name', v)} style={styles.input} />
       <TextInput label="Amount (meters) *" value={formData.amountMeters} onChangeText={v => setField('amountMeters', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Color" value={formData.color} onChangeText={v => setField('color', v)} style={styles.input} />
       <TextInput label="Pattern" value={formData.pattern} onChangeText={v => setField('pattern', v)} style={styles.input} />

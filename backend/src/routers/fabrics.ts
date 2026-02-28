@@ -80,10 +80,18 @@ export default function fabricsRouter(pool: Pool) {
 
       const fabricData = {
         ...req.body,
+        name: req.body.name?.trim(),
         fabric_type_id: Number(req.body.fabric_type_id),
         amount_meters: Number(req.body.amount_meters),
         cost: req.body.cost != null && req.body.cost !== '' ? Number(req.body.cost) : undefined,
       };
+
+      const existing = await fabricRepo.findByTypeAndName(fabricData.fabric_type_id, fabricData.name);
+      if (existing) {
+        res.status(400).json({ success: false, errors: ['A fabric with this name already exists for this type.'] });
+        return;
+      }
+
       const fabric = await fabricService.createFabric(fabricData);
 
       const files = (req.files as Express.Multer.File[]) ?? [];
@@ -111,13 +119,22 @@ export default function fabricsRouter(pool: Pool) {
         return;
       }
 
+      const fabricId = req.params['id'] as string;
       const fabricData = {
         ...req.body,
+        name: req.body.name?.trim(),
         fabric_type_id: Number(req.body.fabric_type_id),
         amount_meters: Number(req.body.amount_meters),
         cost: req.body.cost != null && req.body.cost !== '' ? Number(req.body.cost) : undefined,
       };
-      const fabric = await fabricService.updateFabric(req.params['id'] as string, fabricData);
+
+      const existing = await fabricRepo.findByTypeAndName(fabricData.fabric_type_id, fabricData.name, fabricId);
+      if (existing) {
+        res.status(400).json({ success: false, errors: ['A fabric with this name already exists for this type.'] });
+        return;
+      }
+
+      const fabric = await fabricService.updateFabric(fabricId, fabricData);
       if (!fabric) {
         res.status(404).json({ success: false, error: 'Fabric not found' });
         return;

@@ -11,6 +11,7 @@ export interface FabricType {
 
 export interface Fabric {
   id: string;
+  name: string;
   fabric_type_id: number;
   fabric_type_name?: string;
   color: string | null;
@@ -33,6 +34,7 @@ export interface FabricImage {
 }
 
 export interface CreateFabricInput {
+  name: string;
   fabric_type_id: number;
   color?: string;
   pattern?: string;

@@ -71,6 +71,7 @@ function FabricCard({ fabric, onPress }: { fabric: FabricWithImages; onPress: ()
         <Card.Cover source={{ uri: getImageUrl(thumbnail.file_path) }} />
       )}
       <Card.Content style={styles.cardContent}>
+        <Text variant="titleMedium">{fabric.name}</Text>
         {fabric.color && <Text variant="bodySmall">{fabric.color}</Text>}
         <Text variant="bodySmall">{fabric.amount_meters} m</Text>
       </Card.Content>
