@@ -1,5 +1,5 @@
-import { FlatList, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Card, Text } from 'react-native-paper';
+import { FlatList, Image, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Card, Icon, Text } from 'react-native-paper';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -67,13 +67,21 @@ function FabricCard({ fabric, onPress }: { fabric: FabricWithImages; onPress: ()
 
   return (
     <Card style={styles.card} onPress={onPress}>
-      {thumbnail && (
-        <Card.Cover source={{ uri: getImageUrl(thumbnail.file_path) }} />
-      )}
-      <Card.Content style={styles.cardContent}>
-        <Text variant="titleMedium">{fabric.name}</Text>
-        {fabric.color && <Text variant="bodySmall">{fabric.color}</Text>}
-        <Text variant="bodySmall">{fabric.amount_meters} m</Text>
+      <Card.Content style={styles.cardRow}>
+        <View style={styles.textContent}>
+          <Text variant="titleMedium">{fabric.name}</Text>
+          <Text variant="bodySmall">{fabric.amount_meters} m</Text>
+        </View>
+        {thumbnail ? (
+          <Image
+            source={{ uri: getImageUrl(thumbnail.file_path) }}
+            style={styles.thumbnail}
+          />
+        ) : (
+          <View style={[styles.thumbnail, styles.placeholder]}>
+            <Icon source="image-outline" size={32} color="#999" />
+          </View>
+        )}
       </Card.Content>
     </Card>
   );
@@ -84,5 +92,8 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: 16, gap: 12 },
   card: { marginBottom: 4 },
-  cardContent: { paddingTop: 8 },
+  cardRow: { flexDirection: 'row', alignItems: 'center' },
+  textContent: { flex: 1, gap: 10 },
+  thumbnail: { width: 60, height: 60, borderRadius: 8 },
+  placeholder: { backgroundColor: '#e0e0e0', justifyContent: 'center', alignItems: 'center' },
 });

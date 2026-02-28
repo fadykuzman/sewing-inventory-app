@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Bunni Fabrics",
-    "slug": "bunni-fabrics",
+    "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,7 +25,9 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.RECORD_AUDIO"],
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "package": "com.vanillaandcaramel.sewing"
     },
     "plugins": [
@@ -43,6 +45,7 @@
       "eas": {
         "projectId": "60701f00-33ba-45ef-a27a-7face380dfb9"
       }
-    }
+    },
+    "owner": "codefuchs"
   }
 }

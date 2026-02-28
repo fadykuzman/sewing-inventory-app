@@ -9,8 +9,7 @@
       "android": {
         "buildType": "apk",
         "autoIncrement": true
-      },
-      "applicationArchivePath": "sewing-inventory.apk"
+      }
     },
     "production": {
       "android": {
