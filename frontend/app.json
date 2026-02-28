@@ -24,7 +24,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.vanillaandcaramel.sewing"
     },
     "plugins": [
       [
@@ -36,6 +40,11 @@
     ],
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "60701f00-33ba-45ef-a27a-7face380dfb9"
+      }
     }
   }
 }
