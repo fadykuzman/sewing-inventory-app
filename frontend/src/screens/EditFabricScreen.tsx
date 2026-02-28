@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Dialog, HelperText, IconButton, Portal, Text, TextInput, TouchableRipple } from 'react-native-paper';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -120,9 +120,11 @@ export default function EditFabricScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text variant="headlineMedium" style={styles.title}>Edit Fabric</Text>
 
+      <TextInput label="Name *" value={formData.name} onChangeText={v => setField('name', v)} style={styles.input} />
       <View style={styles.input}>
         <TextInput
           label="Fabric Type *"
@@ -142,7 +144,6 @@ export default function EditFabricScreen() {
           </ScrollView>
         )}
       </View>
-      <TextInput label="Name *" value={formData.name} onChangeText={v => setField('name', v)} style={styles.input} />
       <TextInput label="Amount (meters) *" value={formData.amountMeters} onChangeText={v => setField('amountMeters', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Color" value={formData.color} onChangeText={v => setField('color', v)} style={styles.input} />
       <TextInput label="Pattern" value={formData.pattern} onChangeText={v => setField('pattern', v)} style={styles.input} />
@@ -207,10 +208,12 @@ export default function EditFabricScreen() {
         </Button>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   container: { padding: 16 },
   title: { marginBottom: 16 },
