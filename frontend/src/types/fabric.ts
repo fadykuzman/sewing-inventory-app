@@ -1,6 +1,17 @@
+export interface FabricType {
+  id: number;
+  name: string;
+  name_en: string;
+  slug_de: string;
+  slug_en: string;
+  category: string;
+  use_case: string;
+}
+
 export interface Fabric {
   id: string;
-  type: string;
+  fabric_type_id: number;
+  fabric_type_name?: string;
   color: string | null;
   pattern: string | null;
   amount_meters: number;
@@ -21,7 +32,7 @@ export interface FabricImage {
 }
 
 export interface CreateFabricInput {
-  type: string;
+  fabric_type_id: number;
   color?: string;
   pattern?: string;
   amount_meters: number;

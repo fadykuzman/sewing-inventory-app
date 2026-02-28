@@ -5,15 +5,17 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-paper';
-import FabricListScreen from './src/screens/FabricListScreen';
+import FabricTypeListScreen from './src/screens/FabricTypeListScreen';
+import FabricsByTypeScreen from './src/screens/FabricsByTypeScreen';
 import FabricDetailScreen from './src/screens/FabricDetailScreen';
 import AddFabricScreen from './src/screens/AddFabricScreen';
 import EditFabricScreen from './src/screens/EditFabricScreen';
 
 export type RootStackParamList = {
-  FabricList: undefined;
+  FabricTypeList: undefined;
+  FabricsByType: { typeId: number; typeName: string };
   FabricDetail: { id: string };
-  AddFabric: undefined;
+  AddFabric: { preselectedTypeId?: number; preselectedTypeName?: string } | undefined;
   EditFabric: { id: string };
 };
 
@@ -33,14 +35,22 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <PaperProvider>
         <NavigationContainer>
-          <Stack.Navigator initialRouteName="FabricList">
+          <Stack.Navigator initialRouteName="FabricTypeList">
             <Stack.Screen
-              name="FabricList"
-              component={FabricListScreen}
-              options={({ navigation }) => ({
-                title: 'My Fabrics',
+              name="FabricTypeList"
+              component={FabricTypeListScreen}
+              options={{ title: 'Fabric Types' }}
+            />
+            <Stack.Screen
+              name="FabricsByType"
+              component={FabricsByTypeScreen}
+              options={({ route, navigation }) => ({
+                title: route.params.typeName,
                 headerRight: () => (
-                  <AddButton onPress={() => navigation.navigate('AddFabric')} />
+                  <AddButton onPress={() => navigation.navigate('AddFabric', {
+                    preselectedTypeId: route.params.typeId,
+                    preselectedTypeName: route.params.typeName,
+                  })} />
                 ),
               })}
             />

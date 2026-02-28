@@ -5,13 +5,13 @@ export class FabricRepository {
   constructor(private pool: Pool) { }
 
   async insert(data: CreateFabricInput): Promise<Fabric> {
-    const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
+    const { fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
 
     const result = await this.pool.query(
-      `INSERT INTO fabrics (type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas)
+      `INSERT INTO fabrics (fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas]
+      [fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas]
     );
 
     return result.rows[0];
@@ -31,26 +31,39 @@ export class FabricRepository {
     return result.rows;
   }
 
-  async findAllWithImages(limit: number, offset: number, search?: string): Promise<FabricWithImages[]> {
+  async findAllWithImages(limit: number, offset: number, search?: string, fabricTypeId?: number): Promise<FabricWithImages[]> {
     const params: (string | number)[] = [];
-    let whereClause = '';
+    const conditions: string[] = [];
 
     if (search) {
       params.push(`%${search}%`);
-      whereClause = `WHERE type ILIKE $1 OR color ILIKE $1 OR pattern ILIKE $1 OR label ILIKE $1 OR purchase_location ILIKE $1`;
+      const searchIdx = params.length;
+      conditions.push(
+        `(ft.name_en ILIKE $${searchIdx} OR ft.name ILIKE $${searchIdx} OR color ILIKE $${searchIdx} OR pattern ILIKE $${searchIdx} OR label ILIKE $${searchIdx} OR purchase_location ILIKE $${searchIdx})`
+      );
     }
+
+    if (fabricTypeId) {
+      params.push(fabricTypeId);
+      conditions.push(`fabric_type_id = $${params.length}`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const limitIdx = params.length + 1;
     const offsetIdx = params.length + 2;
     params.push(limit, offset);
 
     const result = await this.pool.query(
-      `SELECT f.*,
+      `SELECT f.*, ft.name_en AS fabric_type_name,
               fi.id AS image_id, fi.file_path, fi."order", fi.created_at AS image_created_at
        FROM fabrics f
+       JOIN fabric_types ft ON f.fabric_type_id = ft.id
        LEFT JOIN fabric_images fi ON f.id = fi.fabric_id
        WHERE f.id IN (
-         SELECT id FROM fabrics ${whereClause} ORDER BY created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}
+         SELECT f2.id FROM fabrics f2
+         JOIN fabric_types ft2 ON f2.fabric_type_id = ft2.id
+         ${whereClause} ORDER BY f2.created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}
        )
        ORDER BY f.created_at DESC, fi."order" ASC`,
       params
@@ -62,7 +75,8 @@ export class FabricRepository {
       if (!fabricMap.has(row.id)) {
         fabricMap.set(row.id, {
           id: row.id,
-          type: row.type,
+          fabric_type_id: row.fabric_type_id,
+          fabric_type_name: row.fabric_type_name,
           color: row.color,
           pattern: row.pattern,
           amount_meters: row.amount_meters,
@@ -130,16 +144,16 @@ export class FabricRepository {
   }
 
   async update(id: string, data: CreateFabricInput): Promise<Fabric | null> {
-    const { type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
+    const { fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
 
     const result = await this.pool.query(
       `UPDATE fabrics
-       SET type = $1, color = $2, pattern = $3, amount_meters = $4,
+       SET fabric_type_id = $1, color = $2, pattern = $3, amount_meters = $4,
            label = $5, purchase_location = $6, cost = $7, project_ideas = $8,
            updated_at = NOW()
        WHERE id = $9
        RETURNING *`,
-      [type, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, id]
+      [fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, id]
     );
 
     return result.rows[0] ?? null;

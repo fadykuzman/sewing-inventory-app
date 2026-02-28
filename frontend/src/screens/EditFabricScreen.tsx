@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Dialog, HelperText, IconButton, Portal, Text, TextInput } from 'react-native-paper';
+import { ActivityIndicator, Button, Dialog, HelperText, IconButton, Portal, Text, TextInput, TouchableRipple } from 'react-native-paper';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { addFabricImages, getFabricById, getImageUrl, removeFabricImages, updateFabric } from '../api/fabrics';
+import { getFabricTypes } from '../api/fabricTypes';
 import { useFabricForm } from '../hooks/useFabricForm';
 import { useImagePicker } from '../hooks/useImagePicker';
-import { FabricImage } from '../types/fabric';
+import { FabricImage, FabricType } from '../types/fabric';
 import type { RootStackParamList } from '../../App';
 
 type RouteProp = NativeStackScreenProps<RootStackParamList, 'EditFabric'>['route'];
@@ -23,6 +24,15 @@ export default function EditFabricScreen() {
   const [populated, setPopulated] = useState(false);
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
 
+  const { data: fabricTypes = [] } = useQuery({
+    queryKey: ['fabricTypes'],
+    queryFn: getFabricTypes,
+  });
+
+  const [typeSearchQuery, setTypeSearchQuery] = useState('');
+  const [typeDropdownVisible, setTypeDropdownVisible] = useState(false);
+  const [selectedTypeName, setSelectedTypeName] = useState('');
+
   const { data: fabric, isLoading, isError } = useQuery({
     queryKey: ['fabric', params.id],
     queryFn: () => getFabricById(params.id),
@@ -31,9 +41,25 @@ export default function EditFabricScreen() {
   useEffect(() => {
     if (fabric && !populated) {
       populateFromFabric(fabric);
+      setSelectedTypeName(fabric.fabric_type_name ?? '');
       setPopulated(true);
     }
   }, [fabric, populated, populateFromFabric]);
+
+  const filteredTypes = useMemo(() => {
+    if (!typeSearchQuery) return fabricTypes;
+    const q = typeSearchQuery.toLowerCase();
+    return fabricTypes.filter(
+      (t) => t.name_en.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)
+    );
+  }, [fabricTypes, typeSearchQuery]);
+
+  function selectType(t: FabricType) {
+    setField('fabricTypeId', String(t.id));
+    setSelectedTypeName(t.name_en);
+    setTypeDropdownVisible(false);
+    setTypeSearchQuery('');
+  }
 
   const existingImages = (fabric?.images ?? []).filter(
     (img) => !removedImageIds.includes(img.id)
@@ -97,7 +123,25 @@ export default function EditFabricScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text variant="headlineMedium" style={styles.title}>Edit Fabric</Text>
 
-      <TextInput label="Type *" value={formData.type} onChangeText={v => setField('type', v)} style={styles.input} />
+      <View style={styles.input}>
+        <TextInput
+          label="Fabric Type *"
+          value={typeDropdownVisible ? typeSearchQuery : selectedTypeName}
+          onChangeText={(v) => { setTypeSearchQuery(v); if (!typeDropdownVisible) setTypeDropdownVisible(true); }}
+          onFocus={() => setTypeDropdownVisible(true)}
+          right={<TextInput.Icon icon={typeDropdownVisible ? 'chevron-up' : 'chevron-down'} onPress={() => setTypeDropdownVisible(!typeDropdownVisible)} />}
+        />
+        {typeDropdownVisible && (
+          <ScrollView style={[styles.dropdown, styles.dropdownList]} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+            {filteredTypes.length === 0 && <Text style={styles.dropdownItem}>No types found</Text>}
+            {filteredTypes.map((item) => (
+              <TouchableRipple key={item.id} onPress={() => selectType(item)}>
+                <Text style={styles.dropdownItem}>{item.name_en}</Text>
+              </TouchableRipple>
+            ))}
+          </ScrollView>
+        )}
+      </View>
       <TextInput label="Amount (meters) *" value={formData.amountMeters} onChangeText={v => setField('amountMeters', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Color" value={formData.color} onChangeText={v => setField('color', v)} style={styles.input} />
       <TextInput label="Pattern" value={formData.pattern} onChangeText={v => setField('pattern', v)} style={styles.input} />
@@ -177,4 +221,7 @@ const styles = StyleSheet.create({
   thumbnail: { width: 80, height: 80, borderRadius: 4 },
   removeButton: { position: 'absolute', top: -8, right: -8, margin: 0 },
   dialogButton: { marginBottom: 8 },
+  dropdown: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc', borderTopWidth: 0, zIndex: 10 },
+  dropdownList: { maxHeight: 200 },
+  dropdownItem: { padding: 12 },
 });

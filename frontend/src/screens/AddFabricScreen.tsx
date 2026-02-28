@@ -1,19 +1,58 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, Dialog, HelperText, Portal, Text, TextInput } from 'react-native-paper';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigation } from '@react-navigation/native';
+import { Button, Dialog, HelperText, Menu, Portal, Text, TextInput, TouchableRipple } from 'react-native-paper';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 import { createFabric } from '../api/fabrics';
+import { getFabricTypes } from '../api/fabricTypes';
+import { FabricType } from '../types/fabric';
 import { useFabricForm } from '../hooks/useFabricForm';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { RootStackParamList } from '../../App';
 
+type ScreenRouteProp = RouteProp<RootStackParamList, 'AddFabric'>;
+
 export default function AddFabricScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<ScreenRouteProp>();
   const queryClient = useQueryClient();
   const { formData, setField, reset, validate, toFormData } = useFabricForm();
   const { images, pickImages, takePhoto, clear: clearImages, appendToFormData } = useImagePicker();
+
+  const { data: fabricTypes = [] } = useQuery({
+    queryKey: ['fabricTypes'],
+    queryFn: getFabricTypes,
+  });
+
+  const [typeSearchQuery, setTypeSearchQuery] = useState('');
+  const [typeDropdownVisible, setTypeDropdownVisible] = useState(false);
+  const [selectedTypeName, setSelectedTypeName] = useState('');
+
+  // Pre-populate from navigation params
+  useEffect(() => {
+    const params = route.params;
+    if (params?.preselectedTypeId && params?.preselectedTypeName) {
+      setField('fabricTypeId', String(params.preselectedTypeId));
+      setSelectedTypeName(params.preselectedTypeName);
+    }
+  }, [route.params]);
+
+  const filteredTypes = useMemo(() => {
+    if (!typeSearchQuery) return fabricTypes;
+    const q = typeSearchQuery.toLowerCase();
+    return fabricTypes.filter(
+      (t) => t.name_en.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)
+    );
+  }, [fabricTypes, typeSearchQuery]);
+
+  function selectType(t: FabricType) {
+    setField('fabricTypeId', String(t.id));
+    setSelectedTypeName(t.name_en);
+    setTypeDropdownVisible(false);
+    setTypeSearchQuery('');
+  }
   const [validationError, setValidationError] = useState<string | null>(null);
   const [imageMenuVisible, setImageMenuVisible] = useState(false);
   const mutation = useMutation({
@@ -46,7 +85,25 @@ export default function AddFabricScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text variant="headlineMedium" style={styles.title}>Add Fabric</Text>
 
-      <TextInput label="Type *" value={formData.type} onChangeText={v => setField('type', v)} style={styles.input} />
+      <View style={styles.input}>
+        <TextInput
+          label="Fabric Type *"
+          value={typeDropdownVisible ? typeSearchQuery : selectedTypeName}
+          onChangeText={(v) => { setTypeSearchQuery(v); if (!typeDropdownVisible) setTypeDropdownVisible(true); }}
+          onFocus={() => setTypeDropdownVisible(true)}
+          right={<TextInput.Icon icon={typeDropdownVisible ? 'chevron-up' : 'chevron-down'} onPress={() => setTypeDropdownVisible(!typeDropdownVisible)} />}
+        />
+        {typeDropdownVisible && (
+          <ScrollView style={[styles.dropdown, styles.dropdownList]} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+            {filteredTypes.length === 0 && <Text style={styles.dropdownItem}>No types found</Text>}
+            {filteredTypes.map((item) => (
+              <TouchableRipple key={item.id} onPress={() => selectType(item)}>
+                <Text style={styles.dropdownItem}>{item.name_en}</Text>
+              </TouchableRipple>
+            ))}
+          </ScrollView>
+        )}
+      </View>
       <TextInput label="Amount (meters) *" value={formData.amountMeters} onChangeText={v => setField('amountMeters', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Color" value={formData.color} onChangeText={v => setField('color', v)} style={styles.input} />
       <TextInput label="Pattern" value={formData.pattern} onChangeText={v => setField('pattern', v)} style={styles.input} />
@@ -102,4 +159,7 @@ const styles = StyleSheet.create({
   imageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   thumbnail: { width: 80, height: 80, borderRadius: 4 },
   dialogButton: { marginBottom: 8 },
+  dropdown: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc', borderTopWidth: 0, zIndex: 10 },
+  dropdownList: { maxHeight: 200 },
+  dropdownItem: { padding: 12 },
 });

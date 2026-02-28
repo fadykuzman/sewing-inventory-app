@@ -48,7 +48,7 @@ export default function FabricDetailScreen() {
           />
         ))}
 
-        <Text variant="headlineSmall" style={styles.title}>{fabric.type}</Text>
+        <Text variant="headlineSmall" style={styles.title}>{fabric.fabric_type_name}</Text>
         <Divider style={styles.divider} />
 
         <Field label="Amount" value={`${fabric.amount_meters} m`} />

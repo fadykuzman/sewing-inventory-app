@@ -87,9 +87,10 @@ export async function removeFabricImages(fabricId: string, imageIds: string[]): 
   if (!response.ok) throw new Error(json.error ?? 'Failed to remove images');
 }
 
-export async function getFabricsPaginated(limit: number, offset: number, search?: string): Promise<FabricWithImages[]> {
+export async function getFabricsPaginated(limit: number, offset: number, search?: string, fabricTypeId?: number): Promise<FabricWithImages[]> {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (search) params.set('search', search);
+  if (fabricTypeId) params.set('fabric_type_id', String(fabricTypeId));
   const response = await fetch(`${API_URL}/fabrics?${params}`);
   const json: ApiResponse<FabricWithImages[]> = await response.json();
   if (!response.ok) throw new Error(json.error ?? 'Failed to fetch fabrics');

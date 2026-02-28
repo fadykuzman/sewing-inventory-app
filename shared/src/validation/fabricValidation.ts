@@ -4,7 +4,7 @@ export const VALIDATION_CONSTANTS = {
 } as const;
 
 export interface RawFabricInput {
-  type?: string;
+  fabric_type_id?: string | number;
   color?: string;
   pattern?: string;
   amount_meters?: string | number;
@@ -24,10 +24,13 @@ const OPTIONAL_SHORT_FIELDS: { field: keyof RawFabricInput; label: string }[] = 
 export function validateCreateFabric(body: RawFabricInput): string[] {
   const errors: string[] = [];
 
-  if (!body.type || !body.type.trim()) {
-    errors.push('Type is required.');
-  } else if (body.type.trim().length > VALIDATION_CONSTANTS.MAX_SHORT) {
-    errors.push(`Type must be ${VALIDATION_CONSTANTS.MAX_SHORT} characters or less.`);
+  if (body.fabric_type_id == null || body.fabric_type_id === '') {
+    errors.push('Fabric type is required.');
+  } else {
+    const id = Number(body.fabric_type_id);
+    if (isNaN(id) || id <= 0 || !Number.isInteger(id)) {
+      errors.push('Fabric type must be a valid ID.');
+    }
   }
 
   if (body.amount_meters == null || body.amount_meters === '') {

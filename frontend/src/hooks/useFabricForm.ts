@@ -3,7 +3,7 @@ import { validateCreateFabric } from '@sewing/shared';
 import { Fabric } from '../types/fabric';
 
 interface FabricFormData {
-  type: string;
+  fabricTypeId: string;
   color: string;
   pattern: string;
   amountMeters: string;
@@ -14,7 +14,7 @@ interface FabricFormData {
 }
 
 const initialFormData: FabricFormData = {
-  type: '',
+  fabricTypeId: '',
   color: '',
   pattern: '',
   amountMeters: '',
@@ -37,7 +37,7 @@ export function useFabricForm() {
 
   const populateFromFabric = useCallback((fabric: Fabric) => {
     setFormData({
-      type: fabric.type,
+      fabricTypeId: String(fabric.fabric_type_id),
       color: fabric.color ?? '',
       pattern: fabric.pattern ?? '',
       amountMeters: String(fabric.amount_meters),
@@ -52,7 +52,7 @@ export function useFabricForm() {
 
   function validate(): string[] {
     return validateCreateFabric({
-      type: formData.type,
+      fabric_type_id: formData.fabricTypeId,
       amount_meters: formData.amountMeters,
       cost: formData.cost || undefined,
       color: formData.color || undefined,
@@ -65,7 +65,7 @@ export function useFabricForm() {
 
   function toFormData(): FormData {
     const fd = new FormData();
-    fd.append('type', formData.type.trim());
+    fd.append('fabric_type_id', formData.fabricTypeId);
     fd.append('amount_meters', formData.amountMeters.trim());
     if (formData.color) fd.append('color', formData.color.trim());
     if (formData.pattern) fd.append('pattern', formData.pattern.trim());
@@ -78,7 +78,7 @@ export function useFabricForm() {
 
   function toJSON(): Record<string, string> {
     const data: Record<string, string> = {
-      type: formData.type.trim(),
+      fabric_type_id: formData.fabricTypeId,
       amount_meters: formData.amountMeters.trim(),
     };
     if (formData.color) data.color = formData.color.trim();

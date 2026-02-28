@@ -46,7 +46,9 @@ export default function fabricsRouter(pool: Pool) {
     try {
       const { limit, offset } = parsePagination(_req.query);
       const search = typeof _req.query.search === 'string' ? _req.query.search.trim() : undefined;
-      const fabrics = await fabricService.getAllFabrics(limit, offset, search || undefined);
+      const fabricTypeIdRaw = _req.query.fabric_type_id;
+      const fabricTypeId = typeof fabricTypeIdRaw === 'string' && fabricTypeIdRaw.trim() ? Number(fabricTypeIdRaw) : undefined;
+      const fabrics = await fabricService.getAllFabrics(limit, offset, search || undefined, fabricTypeId || undefined);
       const response: ApiResponse<FabricWithImages[]> = { success: true, data: fabrics };
       res.json(response);
     } catch (err) {
@@ -76,7 +78,13 @@ export default function fabricsRouter(pool: Pool) {
         return;
       }
 
-      const fabric = await fabricService.createFabric(req.body);
+      const fabricData = {
+        ...req.body,
+        fabric_type_id: Number(req.body.fabric_type_id),
+        amount_meters: Number(req.body.amount_meters),
+        cost: req.body.cost != null && req.body.cost !== '' ? Number(req.body.cost) : undefined,
+      };
+      const fabric = await fabricService.createFabric(fabricData);
 
       const files = (req.files as Express.Multer.File[]) ?? [];
       const { images = [], warning } = files.length > 0
@@ -103,7 +111,13 @@ export default function fabricsRouter(pool: Pool) {
         return;
       }
 
-      const fabric = await fabricService.updateFabric(req.params['id'] as string, req.body);
+      const fabricData = {
+        ...req.body,
+        fabric_type_id: Number(req.body.fabric_type_id),
+        amount_meters: Number(req.body.amount_meters),
+        cost: req.body.cost != null && req.body.cost !== '' ? Number(req.body.cost) : undefined,
+      };
+      const fabric = await fabricService.updateFabric(req.params['id'] as string, fabricData);
       if (!fabric) {
         res.status(404).json({ success: false, error: 'Fabric not found' });
         return;
