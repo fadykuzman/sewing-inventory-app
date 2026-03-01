@@ -1,5 +1,5 @@
 import { FlatList, Image, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Card, FAB, Icon, Text } from 'react-native-paper';
+import { ActivityIndicator, Card, FAB, Icon, Text, useTheme } from 'react-native-paper';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -71,6 +71,7 @@ export default function FabricsByTypeScreen() {
 }
 
 function FabricCard({ fabric, onPress }: { fabric: FabricWithImages; onPress: () => void }) {
+  const theme = useTheme();
   const thumbnail = fabric.images[0];
 
   return (
@@ -86,8 +87,8 @@ function FabricCard({ fabric, onPress }: { fabric: FabricWithImages; onPress: ()
             style={styles.thumbnail}
           />
         ) : (
-          <View style={[styles.thumbnail, styles.placeholder]}>
-            <Icon source="image-outline" size={32} color="#999" />
+          <View style={[styles.thumbnail, { backgroundColor: theme.colors.surfaceVariant, justifyContent: 'center', alignItems: 'center' }]}>
+            <Icon source="image-outline" size={32} color={theme.colors.outline} />
           </View>
         )}
       </Card.Content>
@@ -104,5 +105,4 @@ const styles = StyleSheet.create({
   cardRow: { flexDirection: 'row', alignItems: 'center' },
   textContent: { flex: 1, gap: 10 },
   thumbnail: { width: 60, height: 60, borderRadius: 8 },
-  placeholder: { backgroundColor: '#e0e0e0', justifyContent: 'center', alignItems: 'center' },
 });

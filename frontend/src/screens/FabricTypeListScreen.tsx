@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Dialog, Portal, Searchbar, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Dialog, Portal, Searchbar, Text, useTheme } from 'react-native-paper';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,6 +22,7 @@ function useDebounce(value: string, delay: number): string {
 }
 
 export default function FabricTypeListScreen() {
+  const theme = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,14 +113,14 @@ export default function FabricTypeListScreen() {
           >
             <Card.Content style={styles.cardRow}>
               <View style={styles.cardText}>
-                <Text variant="titleMedium" style={!item.available ? styles.textHidden : undefined}>
+                <Text variant="titleMedium" style={!item.available ? { color: theme.colors.outline } : undefined}>
                   {item.name}
                 </Text>
-                <Text variant="bodySmall" style={!item.available ? styles.textHidden : undefined}>
+                <Text variant="bodySmall" style={!item.available ? { color: theme.colors.outline } : undefined}>
                   {item.name_en}
                 </Text>
               </View>
-              <Text variant="titleLarge" style={[styles.count, !item.available && styles.textHidden]}>
+              <Text variant="titleLarge" style={[styles.count, !item.available && { color: theme.colors.outline }]}>
                 {item.fabric_count}
               </Text>
             </Card.Content>
@@ -159,5 +160,4 @@ const styles = StyleSheet.create({
   cardRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cardText: { flex: 1 },
   count: { marginLeft: 16, opacity: 0.6 },
-  textHidden: { color: '#999' },
 });

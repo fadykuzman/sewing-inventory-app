@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { IconButton, Text, TextInput, TouchableRipple } from 'react-native-paper';
+import { IconButton, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
 import { Material } from '../types/fabric';
 
 export interface MaterialRow {
@@ -16,6 +16,7 @@ interface Props {
 }
 
 export default function MaterialCompositionInput({ rows, onChange, materials }: Props) {
+  const theme = useTheme();
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [searchQueries, setSearchQueries] = useState<Record<number, string>>({});
 
@@ -79,7 +80,7 @@ export default function MaterialCompositionInput({ rows, onChange, materials }: 
                 right={<TextInput.Icon icon={isOpen ? 'chevron-up' : 'chevron-down'} onPress={() => setOpenDropdownIndex(isOpen ? null : index)} />}
               />
               {isOpen && (
-                <ScrollView style={styles.dropdown} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                <ScrollView style={{ backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.outlineVariant, borderTopWidth: 0, maxHeight: 150, zIndex: 10 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
                   {filteredMaterials.length === 0 && <Text style={styles.dropdownItem}>No materials found</Text>}
                   {filteredMaterials.map((m) => (
                     <TouchableRipple key={m.id} onPress={() => selectMaterial(index, m)}>
@@ -113,6 +114,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, gap: 8 },
   materialField: { flex: 1 },
   percentField: { width: 72 },
-  dropdown: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc', borderTopWidth: 0, maxHeight: 150, zIndex: 10 },
   dropdownItem: { padding: 10 },
 });

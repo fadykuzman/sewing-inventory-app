@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Image, Keyboard, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Dialog, HelperText, IconButton, Portal, Text, TextInput, TouchableRipple } from 'react-native-paper';
+import { ActivityIndicator, Button, Dialog, HelperText, IconButton, Portal, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,6 +16,7 @@ import type { RootStackParamList } from '../../App';
 type RouteProp = NativeStackScreenProps<RootStackParamList, 'EditFabric'>['route'];
 
 export default function EditFabricScreen() {
+  const theme = useTheme();
   const { params } = useRoute<RouteProp>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
@@ -165,7 +166,7 @@ export default function EditFabricScreen() {
           right={<TextInput.Icon icon={typeDropdownVisible ? 'chevron-up' : 'chevron-down'} onPress={() => setTypeDropdownVisible(!typeDropdownVisible)} />}
         />
         {typeDropdownVisible && (
-          <ScrollView style={[styles.dropdown, styles.dropdownList]} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+          <ScrollView style={[{ backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.outlineVariant, borderTopWidth: 0, zIndex: 10 }, styles.dropdownList]} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
             {filteredTypes.length === 0 && <Text style={styles.dropdownItem}>No types found</Text>}
             {filteredTypes.map((item) => (
               <TouchableRipple key={item.id} onPress={() => selectType(item)}>
@@ -254,7 +255,6 @@ const styles = StyleSheet.create({
   thumbnail: { width: 80, height: 80, borderRadius: 4 },
   removeButton: { position: 'absolute', top: -8, right: -8, margin: 0 },
   dialogButton: { marginBottom: 8 },
-  dropdown: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc', borderTopWidth: 0, zIndex: 10 },
   dropdownList: { maxHeight: 200 },
   dropdownItem: { padding: 12 },
 });

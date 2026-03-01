@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Image, Keyboard, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, Dialog, HelperText, IconButton, Menu, Portal, Text, TextInput, TouchableRipple } from 'react-native-paper';
+import { Button, Dialog, HelperText, IconButton, Menu, Portal, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +17,7 @@ import { RootStackParamList } from '../../App';
 type ScreenRouteProp = RouteProp<RootStackParamList, 'AddFabric'>;
 
 export default function AddFabricScreen() {
+  const theme = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<ScreenRouteProp>();
   const queryClient = useQueryClient();
@@ -124,7 +125,7 @@ export default function AddFabricScreen() {
           right={<TextInput.Icon icon={typeDropdownVisible ? 'chevron-up' : 'chevron-down'} onPress={() => setTypeDropdownVisible(!typeDropdownVisible)} />}
         />
         {typeDropdownVisible && (
-          <ScrollView style={[styles.dropdown, styles.dropdownList]} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+          <ScrollView style={[{ backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.outlineVariant, borderTopWidth: 0, zIndex: 10 }, styles.dropdownList]} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
             {filteredTypes.length === 0 && <Text style={styles.dropdownItem}>No types found</Text>}
             {filteredTypes.map((item) => (
               <TouchableRipple key={item.id} onPress={() => selectType(item)}>
@@ -189,7 +190,6 @@ const styles = StyleSheet.create({
   imageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   thumbnail: { width: 80, height: 80, borderRadius: 4 },
   dialogButton: { marginBottom: 8 },
-  dropdown: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc', borderTopWidth: 0, zIndex: 10 },
   dropdownList: { maxHeight: 200 },
   dropdownItem: { padding: 12 },
 });

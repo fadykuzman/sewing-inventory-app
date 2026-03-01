@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
-import { PaperProvider } from 'react-native-paper';
-import { NavigationContainer } from '@react-navigation/native';
+import { useColorScheme } from 'react-native';
+import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
+import { NavigationContainer, DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import FabricTypeListScreen from './src/screens/FabricTypeListScreen';
 import FabricsByTypeScreen from './src/screens/FabricsByTypeScreen';
@@ -21,10 +22,15 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const queryClient = new QueryClient();
 
 export default function App() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const paperTheme = isDark ? MD3DarkTheme : MD3LightTheme;
+  const navigationTheme = isDark ? NavigationDarkTheme : NavigationDefaultTheme;
+
   return (
     <QueryClientProvider client={queryClient}>
-      <PaperProvider>
-        <NavigationContainer>
+      <PaperProvider theme={paperTheme}>
+        <NavigationContainer theme={navigationTheme}>
           <Stack.Navigator initialRouteName="FabricTypeList">
             <Stack.Screen
               name="FabricTypeList"

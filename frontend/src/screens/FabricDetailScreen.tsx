@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RefreshControl, ScrollView, Image, StyleSheet, View, Pressable } from 'react-native';
-import { ActivityIndicator, Button, Dialog, Divider, Portal, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Dialog, Divider, Portal, Text, useTheme } from 'react-native-paper';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -10,6 +10,7 @@ import type { RootStackParamList } from '../../App';
 type RouteProp = NativeStackScreenProps<RootStackParamList, 'FabricDetail'>['route'];
 
 export default function FabricDetailScreen() {
+  const theme = useTheme();
   const { params } = useRoute<RouteProp>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
@@ -39,7 +40,7 @@ export default function FabricDetailScreen() {
 
   return (
     <>
-      <View style={styles.stickyHeader}>
+      <View style={[styles.stickyHeader, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }]}>
         <Text variant="headlineSmall" style={styles.stickyTitle}>
           {fabric.fabric_type_name ?? ''}
         </Text>
@@ -81,7 +82,7 @@ export default function FabricDetailScreen() {
                   source={{ uri: getImageUrl(img.file_path) }}
                   style={[
                     styles.thumbnail,
-                    index === selectedImageIndex && styles.thumbnailSelected,
+                    index === selectedImageIndex && { borderColor: theme.colors.primary },
                   ]}
                   resizeMode="cover"
                 />
@@ -100,8 +101,8 @@ export default function FabricDetailScreen() {
 
         <Button
           mode="outlined"
-          textColor="red"
-          style={styles.deleteButton}
+          textColor={theme.colors.error}
+          style={[styles.deleteButton, { borderColor: theme.colors.error }]}
           onPress={() => setConfirmVisible(true)}
         >
           Delete fabric
@@ -117,7 +118,7 @@ export default function FabricDetailScreen() {
           <Dialog.Actions>
             <Button onPress={() => setConfirmVisible(false)}>Cancel</Button>
             <Button
-              textColor="red"
+              textColor={theme.colors.error}
               loading={deleteMutation.isPending}
               onPress={() => deleteMutation.mutate()}
             >
@@ -143,11 +144,9 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   container: { padding: 16 },
   stickyHeader: {
-    backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
     elevation: 2,
   },
   stickyTitle: {
@@ -173,9 +172,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  thumbnailSelected: {
-    borderColor: '#6200ee',
-  },
   editButton: { marginTop: 24 },
-  deleteButton: { marginTop: 12, borderColor: 'red' },
+  deleteButton: { marginTop: 12 },
 });
