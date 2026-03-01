@@ -23,6 +23,55 @@ const OPTIONAL_SHORT_FIELDS: { field: keyof RawFabricInput; label: string }[] = 
   { field: 'purchase_location', label: 'Purchase location' },
 ];
 
+export interface RawMaterialInput {
+  material_id?: string | number;
+  percentage?: string | number;
+}
+
+export function validateMaterialComposition(materials?: RawMaterialInput[]): string[] {
+  if (materials == null || materials.length === 0) {
+    return [];
+  }
+
+  const errors: string[] = [];
+
+  if (materials.length > 3) {
+    errors.push('Maximum 3 materials allowed.');
+    return errors;
+  }
+
+  const seenIds = new Set<number>();
+
+  for (let i = 0; i < materials.length; i++) {
+    const m = materials[i];
+    const pos = i + 1;
+
+    if (m.material_id == null || m.material_id === '') {
+      errors.push(`Material ${pos}: material is required.`);
+    } else {
+      const id = Number(m.material_id);
+      if (isNaN(id) || id <= 0 || !Number.isInteger(id)) {
+        errors.push(`Material ${pos}: invalid material ID.`);
+      } else if (seenIds.has(id)) {
+        errors.push(`Material ${pos}: duplicate material.`);
+      } else {
+        seenIds.add(id);
+      }
+    }
+
+    if (m.percentage == null || m.percentage === '') {
+      errors.push(`Material ${pos}: percentage is required.`);
+    } else {
+      const pct = Number(m.percentage);
+      if (isNaN(pct) || pct < 1 || pct > 100 || !Number.isInteger(pct)) {
+        errors.push(`Material ${pos}: percentage must be a whole number between 1 and 100.`);
+      }
+    }
+  }
+
+  return errors;
+}
+
 export function validateCreateFabric(body: RawFabricInput): string[] {
   const errors: string[] = [];
 

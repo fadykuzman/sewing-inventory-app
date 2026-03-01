@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
-import { validateCreateFabric } from '@sewing/shared';
+import { validateCreateFabric, validateMaterialComposition } from '@sewing/shared';
 import { FabricRepository } from '../repositories/fabricRepository';
 import { FabricService } from '../services/fabricService';
 import { Pool } from 'pg';
@@ -73,6 +73,11 @@ export default function fabricsRouter(pool: Pool) {
   router.post('/', upload.array('images', MAX_IMAGE_COUNT), async (req: Request, res: Response, next: NextFunction) => {
     try {
       const errors = validateCreateFabric(req.body);
+
+      const rawMaterials = req.body.materials ? JSON.parse(req.body.materials) : [];
+      const materialErrors = validateMaterialComposition(rawMaterials);
+      errors.push(...materialErrors);
+
       if (errors.length > 0) {
         res.status(400).json({ success: false, errors });
         return;
@@ -94,14 +99,22 @@ export default function fabricsRouter(pool: Pool) {
 
       const fabric = await fabricService.createFabric(fabricData);
 
+      const materials = rawMaterials.map((m: { material_id: string | number; percentage: string | number }) => ({
+        material_id: Number(m.material_id),
+        percentage: Number(m.percentage),
+      }));
+      await fabricService.saveMaterials(fabric.id, materials);
+
       const files = (req.files as Express.Multer.File[]) ?? [];
       const { images = [], warning } = files.length > 0
         ? await fabricService.saveImages(fabric.id, files)
         : { images: [], warning: undefined };
 
+      const savedMaterials = await fabricRepo.findMaterialsByFabricId(fabric.id);
+
       const response: ApiResponse<FabricWithImages> = {
         success: true,
-        data: { ...fabric, images },
+        data: { ...fabric, images, materials: savedMaterials },
         ...(warning && { warning }),
       };
 
@@ -114,6 +127,11 @@ export default function fabricsRouter(pool: Pool) {
   router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const errors = validateCreateFabric(req.body);
+
+      const rawMaterials = req.body.materials ?? [];
+      const materialErrors = validateMaterialComposition(rawMaterials);
+      errors.push(...materialErrors);
+
       if (errors.length > 0) {
         res.status(400).json({ success: false, errors });
         return;
@@ -140,10 +158,20 @@ export default function fabricsRouter(pool: Pool) {
         return;
       }
 
-      const images = await fabricRepo.findImagesByFabricId(fabric.id);
+      const materials = rawMaterials.map((m: { material_id: string | number; percentage: string | number }) => ({
+        material_id: Number(m.material_id),
+        percentage: Number(m.percentage),
+      }));
+      await fabricService.updateMaterials(fabricId, materials);
+
+      const [images, savedMaterials] = await Promise.all([
+        fabricRepo.findImagesByFabricId(fabric.id),
+        fabricRepo.findMaterialsByFabricId(fabric.id),
+      ]);
+
       const response: ApiResponse<FabricWithImages> = {
         success: true,
-        data: { ...fabric, images },
+        data: { ...fabric, images, materials: savedMaterials },
       };
 
       res.json(response);

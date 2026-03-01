@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { CreateFabricInput, Fabric, FabricImage, FabricWithImages } from '../types/fabric';
+import { CreateFabricInput, Fabric, FabricImage, FabricMaterial, FabricWithImages } from '../types/fabric';
 
 export class FabricRepository {
   constructor(private pool: Pool) { }
@@ -54,17 +54,17 @@ export class FabricRepository {
     const offsetIdx = params.length + 2;
     params.push(limit, offset);
 
+    const subquery = `SELECT f2.id FROM fabrics f2
+         JOIN fabric_types ft2 ON f2.fabric_type_id = ft2.id
+         ${whereClause} ORDER BY f2.created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`;
+
     const result = await this.pool.query(
       `SELECT f.*, ft.name_en AS fabric_type_name,
               fi.id AS image_id, fi.file_path, fi."order", fi.created_at AS image_created_at
        FROM fabrics f
        JOIN fabric_types ft ON f.fabric_type_id = ft.id
        LEFT JOIN fabric_images fi ON f.id = fi.fabric_id
-       WHERE f.id IN (
-         SELECT f2.id FROM fabrics f2
-         JOIN fabric_types ft2 ON f2.fabric_type_id = ft2.id
-         ${whereClause} ORDER BY f2.created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}
-       )
+       WHERE f.id IN (${subquery})
        ORDER BY f.created_at DESC, fi."order" ASC`,
       params
     );
@@ -88,16 +88,45 @@ export class FabricRepository {
           created_at: row.created_at,
           updated_at: row.updated_at,
           images: [],
+          materials: [],
         });
       }
 
       if (row.image_id) {
-        fabricMap.get(row.id)!.images.push({
-          id: row.image_id,
-          fabric_id: row.id,
-          file_path: row.file_path,
-          order: row.order,
-          created_at: row.image_created_at,
+        const fabric = fabricMap.get(row.id)!;
+        if (!fabric.images.some(img => img.id === row.image_id)) {
+          fabric.images.push({
+            id: row.image_id,
+            fabric_id: row.id,
+            file_path: row.file_path,
+            order: row.order,
+            created_at: row.image_created_at,
+          });
+        }
+      }
+    }
+
+    // Fetch materials for all fabrics in one query
+    const fabricIds = Array.from(fabricMap.keys());
+    if (fabricIds.length > 0) {
+      const placeholders = fabricIds.map((_, i) => `$${i + 1}`).join(', ');
+      const matResult = await this.pool.query(
+        `SELECT fm.id, fm.fabric_id, fm.material_id, m.name AS material_name, m.name_en AS material_name_en, fm.percentage
+         FROM fabric_materials fm
+         JOIN materials m ON fm.material_id = m.id
+         WHERE fm.fabric_id IN (${placeholders})
+         ORDER BY fm.percentage DESC`,
+        fabricIds
+      );
+
+      for (const row of matResult.rows) {
+        fabricMap.get(row.fabric_id)?.materials.push({
+          id: row.id,
+          fabric_id: row.fabric_id,
+          material_id: row.material_id,
+          material_name: row.material_name,
+          material_name_en: row.material_name_en,
+          percentage: row.percentage,
         });
       }
     }
@@ -175,5 +204,40 @@ export class FabricRepository {
     );
 
     return result.rows[0] ?? null;
+  }
+
+  async findMaterialsByFabricId(fabricId: string): Promise<FabricMaterial[]> {
+    const result = await this.pool.query(
+      `SELECT fm.id, fm.fabric_id, fm.material_id, m.name AS material_name, m.name_en AS material_name_en, fm.percentage
+       FROM fabric_materials fm
+       JOIN materials m ON fm.material_id = m.id
+       WHERE fm.fabric_id = $1
+       ORDER BY fm.percentage DESC`,
+      [fabricId]
+    );
+    return result.rows;
+  }
+
+  async insertFabricMaterials(fabricId: string, materials: { material_id: number; percentage: number }[]): Promise<void> {
+    if (materials.length === 0) return;
+
+    const values: string[] = [];
+    const params: (string | number)[] = [fabricId];
+
+    for (let i = 0; i < materials.length; i++) {
+      const mIdx = params.length + 1;
+      const pIdx = params.length + 2;
+      values.push(`($1, $${mIdx}, $${pIdx})`);
+      params.push(materials[i].material_id, materials[i].percentage);
+    }
+
+    await this.pool.query(
+      `INSERT INTO fabric_materials (fabric_id, material_id, percentage) VALUES ${values.join(', ')}`,
+      params
+    );
+  }
+
+  async deleteFabricMaterials(fabricId: string): Promise<void> {
+    await this.pool.query(`DELETE FROM fabric_materials WHERE fabric_id = $1`, [fabricId]);
   }
 }

@@ -72,7 +72,7 @@ describe('validateCreateFabric', () => {
     });
 
     it('allows missing cost', () => {
-      const errors = validateCreateFabric({ fabric_type_id: 1, amount_meters: '1.5' });
+      const errors = validateCreateFabric({ name: 'Test', fabric_type_id: 1, amount_meters: '1.5' });
       expect(errors).toHaveLength(0);
     });
   });
@@ -106,12 +106,13 @@ describe('validateCreateFabric', () => {
 
   describe('valid input', () => {
     it('returns no errors for minimal valid input', () => {
-      const errors = validateCreateFabric({ fabric_type_id: 1, amount_meters: '2.5' });
+      const errors = validateCreateFabric({ name: 'Test', fabric_type_id: 1, amount_meters: '2.5' });
       expect(errors).toHaveLength(0);
     });
 
     it('returns no errors for full valid input', () => {
       const errors = validateCreateFabric({
+        name: 'Test Fabric',
         fabric_type_id: 1,
         amount_meters: '2.5',
         color: 'Red',
@@ -125,7 +126,7 @@ describe('validateCreateFabric', () => {
     });
 
     it('accepts numeric values for amount_meters and cost', () => {
-      const errors = validateCreateFabric({ fabric_type_id: 1, amount_meters: 2.5, cost: 10 });
+      const errors = validateCreateFabric({ name: 'Test', fabric_type_id: 1, amount_meters: 2.5, cost: 10 });
       expect(errors).toHaveLength(0);
     });
   });

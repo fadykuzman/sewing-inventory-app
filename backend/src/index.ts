@@ -5,6 +5,7 @@ import cors from 'cors';
 import path from 'path';
 import fabricsRouter from './routers/fabrics';
 import fabricTypesRouter from './routers/fabricTypes';
+import materialsRouter from './routers/materials';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: '../.env' });
@@ -34,6 +35,7 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 })
 app.use('/api/v1/fabric-types', fabricTypesRouter(pool))
+app.use('/api/v1/materials', materialsRouter(pool))
 app.use('/api/v1/fabrics', fabricsRouter(pool))
 
 app.listen(port, () => {

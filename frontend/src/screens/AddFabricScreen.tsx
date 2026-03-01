@@ -7,9 +7,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { createFabric } from '../api/fabrics';
 import { getFabricTypes } from '../api/fabricTypes';
+import { getMaterials } from '../api/materials';
 import { FabricType } from '../types/fabric';
 import { useFabricForm } from '../hooks/useFabricForm';
 import { useImagePicker } from '../hooks/useImagePicker';
+import MaterialCompositionInput, { MaterialRow } from '../components/MaterialCompositionInput';
 import { RootStackParamList } from '../../App';
 
 type ScreenRouteProp = RouteProp<RootStackParamList, 'AddFabric'>;
@@ -25,6 +27,13 @@ export default function AddFabricScreen() {
     queryKey: ['fabricTypes'],
     queryFn: getFabricTypes,
   });
+
+  const { data: materialsList = [] } = useQuery({
+    queryKey: ['materials'],
+    queryFn: getMaterials,
+  });
+
+  const [materialRows, setMaterialRows] = useState<MaterialRow[]>([]);
 
   const [typeSearchQuery, setTypeSearchQuery] = useState('');
   const [typeDropdownVisible, setTypeDropdownVisible] = useState(false);
@@ -76,6 +85,7 @@ export default function AddFabricScreen() {
       queryClient.invalidateQueries({ queryKey: ['fabrics'] });
       reset();
       clearImages();
+      setMaterialRows([]);
       navigation.navigate('FabricDetail', { id: result.data.id });
     },
     onMutate: () => {
@@ -92,6 +102,12 @@ export default function AddFabricScreen() {
     }
 
     const fd = toFormData();
+    const materialsPayload = materialRows
+      .filter(r => r.materialId && r.percentage)
+      .map(r => ({ material_id: r.materialId, percentage: r.percentage }));
+    if (materialsPayload.length > 0) {
+      fd.append('materials', JSON.stringify(materialsPayload));
+    }
     appendToFormData(fd);
     mutation.mutate(fd);
   }
@@ -118,6 +134,9 @@ export default function AddFabricScreen() {
           </ScrollView>
         )}
       </View>
+
+      <MaterialCompositionInput rows={materialRows} onChange={setMaterialRows} materials={materialsList} />
+
       <TextInput label="Amount (meters) *" value={formData.amountMeters} onChangeText={v => setField('amountMeters', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Color" value={formData.color} onChangeText={v => setField('color', v)} style={styles.input} />
       <TextInput label="Pattern" value={formData.pattern} onChangeText={v => setField('pattern', v)} style={styles.input} />

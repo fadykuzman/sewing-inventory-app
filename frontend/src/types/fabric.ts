@@ -46,8 +46,24 @@ export interface CreateFabricInput {
   project_ideas?: string;
 }
 
+export interface Material {
+  id: number;
+  name: string;
+  name_en: string;
+}
+
+export interface FabricMaterial {
+  id: string;
+  fabric_id: string;
+  material_id: number;
+  material_name: string;
+  material_name_en: string;
+  percentage: number;
+}
+
 export interface FabricWithImages extends Fabric {
   images: FabricImage[];
+  materials: FabricMaterial[];
 }
 
 export interface ApiResponse<T> {

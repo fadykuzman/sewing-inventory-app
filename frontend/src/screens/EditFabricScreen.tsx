@@ -6,8 +6,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { addFabricImages, getFabricById, getImageUrl, removeFabricImages, updateFabric } from '../api/fabrics';
 import { getFabricTypes } from '../api/fabricTypes';
+import { getMaterials } from '../api/materials';
 import { useFabricForm } from '../hooks/useFabricForm';
 import { useImagePicker } from '../hooks/useImagePicker';
+import MaterialCompositionInput, { MaterialRow } from '../components/MaterialCompositionInput';
 import { FabricImage, FabricType } from '../types/fabric';
 import type { RootStackParamList } from '../../App';
 
@@ -44,6 +46,13 @@ export default function EditFabricScreen() {
     queryFn: getFabricTypes,
   });
 
+  const { data: materialsList = [] } = useQuery({
+    queryKey: ['materials'],
+    queryFn: getMaterials,
+  });
+
+  const [materialRows, setMaterialRows] = useState<MaterialRow[]>([]);
+
   const [typeSearchQuery, setTypeSearchQuery] = useState('');
   const [typeDropdownVisible, setTypeDropdownVisible] = useState(false);
   const [selectedTypeName, setSelectedTypeName] = useState('');
@@ -57,6 +66,13 @@ export default function EditFabricScreen() {
     if (fabric && !populated) {
       populateFromFabric(fabric);
       setSelectedTypeName(fabric.fabric_type_name ?? '');
+      setMaterialRows(
+        fabric.materials.map(m => ({
+          materialId: String(m.material_id),
+          materialName: `${m.material_name} (${m.material_name_en})`,
+          percentage: String(m.percentage),
+        }))
+      );
       setPopulated(true);
     }
   }, [fabric, populated, populateFromFabric]);
@@ -91,7 +107,10 @@ export default function EditFabricScreen() {
         throw new Error(errors.join(' '));
       }
 
-      await updateFabric(params.id, toJSON());
+      const materialsPayload = materialRows
+        .filter(r => r.materialId && r.percentage)
+        .map(r => ({ material_id: Number(r.materialId), percentage: Number(r.percentage) }));
+      await updateFabric(params.id, { ...toJSON(), materials: materialsPayload });
 
       if (removedImageIds.length > 0) {
         await removeFabricImages(params.id, removedImageIds);
@@ -156,6 +175,9 @@ export default function EditFabricScreen() {
           </ScrollView>
         )}
       </View>
+
+      <MaterialCompositionInput rows={materialRows} onChange={setMaterialRows} materials={materialsList} />
+
       <TextInput label="Amount (meters) *" value={formData.amountMeters} onChangeText={v => setField('amountMeters', v)} keyboardType="decimal-pad" style={styles.input} />
       <TextInput label="Color" value={formData.color} onChangeText={v => setField('color', v)} style={styles.input} />
       <TextInput label="Pattern" value={formData.pattern} onChangeText={v => setField('pattern', v)} style={styles.input} />

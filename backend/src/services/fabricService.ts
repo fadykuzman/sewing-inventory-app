@@ -28,8 +28,11 @@ export class FabricService {
   async getFabricById(id: string): Promise<FabricWithImages | null> {
     const fabric = await this.repo.findById(id);
     if (!fabric) return null;
-    const images = await this.repo.findImagesByFabricId(fabric.id);
-    return { ...fabric, images };
+    const [images, materials] = await Promise.all([
+      this.repo.findImagesByFabricId(fabric.id),
+      this.repo.findMaterialsByFabricId(fabric.id),
+    ]);
+    return { ...fabric, images, materials };
   }
 
   async deleteFabric(id: string): Promise<boolean> {
@@ -96,5 +99,18 @@ export class FabricService {
 
   async updateFabric(id: string, data: CreateFabricInput): Promise<Fabric | null> {
     return this.repo.update(id, data);
+  }
+
+  async saveMaterials(fabricId: string, materials: { material_id: number; percentage: number }[]): Promise<void> {
+    if (materials.length > 0) {
+      await this.repo.insertFabricMaterials(fabricId, materials);
+    }
+  }
+
+  async updateMaterials(fabricId: string, materials: { material_id: number; percentage: number }[]): Promise<void> {
+    await this.repo.deleteFabricMaterials(fabricId);
+    if (materials.length > 0) {
+      await this.repo.insertFabricMaterials(fabricId, materials);
+    }
   }
 }

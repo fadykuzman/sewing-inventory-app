@@ -49,6 +49,12 @@ export default function FabricDetailScreen() {
         contentContainerStyle={styles.container}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
       >
+        {fabric.materials.length > 0 && (
+          <Field
+            label="Composition"
+            value={fabric.materials.map(m => `${m.percentage}% ${m.material_name} (${m.material_name_en})`).join(', ')}
+          />
+        )}
         <Field label="Amount" value={`${fabric.amount_meters} m`} />
         {fabric.color && <Field label="Color" value={fabric.color} />}
         {fabric.pattern && <Field label="Pattern" value={fabric.pattern} />}
