@@ -9,6 +9,18 @@ import FabricsByTypeScreen from './src/screens/FabricsByTypeScreen';
 import FabricDetailScreen from './src/screens/FabricDetailScreen';
 import AddFabricScreen from './src/screens/AddFabricScreen';
 import EditFabricScreen from './src/screens/EditFabricScreen';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { logger } from './src/logger';
+
+const defaultHandler = ErrorUtils.getGlobalHandler();
+ErrorUtils.setGlobalHandler((error, isFatal) => {
+  logger.error('Unhandled error', {
+    error: error?.message,
+    stack: error?.stack,
+    isFatal,
+  });
+  defaultHandler(error, isFatal);
+});
 
 export type RootStackParamList = {
   FabricTypeList: undefined;
@@ -30,25 +42,27 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <PaperProvider theme={paperTheme}>
-        <NavigationContainer theme={navigationTheme}>
-          <Stack.Navigator initialRouteName="FabricTypeList">
-            <Stack.Screen
-              name="FabricTypeList"
-              component={FabricTypeListScreen}
-              options={{ title: 'Fabric Types' }}
-            />
-            <Stack.Screen
-              name="FabricsByType"
-              component={FabricsByTypeScreen}
-              options={({ route }) => ({
-                title: route.params.typeName,
-              })}
-            />
-            <Stack.Screen name="FabricDetail" component={FabricDetailScreen} options={{ title: 'Fabric Details' }} />
-            <Stack.Screen name="AddFabric" component={AddFabricScreen} options={{ title: 'Add Fabric' }} />
-            <Stack.Screen name="EditFabric" component={EditFabricScreen} options={{ title: 'Edit Fabric' }} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <ErrorBoundary>
+          <NavigationContainer theme={navigationTheme}>
+            <Stack.Navigator initialRouteName="FabricTypeList">
+              <Stack.Screen
+                name="FabricTypeList"
+                component={FabricTypeListScreen}
+                options={{ title: 'Fabric Types' }}
+              />
+              <Stack.Screen
+                name="FabricsByType"
+                component={FabricsByTypeScreen}
+                options={({ route }) => ({
+                  title: route.params.typeName,
+                })}
+              />
+              <Stack.Screen name="FabricDetail" component={FabricDetailScreen} options={{ title: 'Fabric Details' }} />
+              <Stack.Screen name="AddFabric" component={AddFabricScreen} options={{ title: 'Add Fabric' }} />
+              <Stack.Screen name="EditFabric" component={EditFabricScreen} options={{ title: 'Edit Fabric' }} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </ErrorBoundary>
         <StatusBar style="auto" />
       </PaperProvider>
     </QueryClientProvider>

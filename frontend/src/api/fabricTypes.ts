@@ -1,5 +1,6 @@
 import { ApiResponse, FabricType } from '../types/fabric';
-import { API_URL } from './fabrics';
+import { logger } from '../logger';
+import { API_URL } from './config';
 
 interface GetFabricTypesOptions {
   available?: boolean;
@@ -15,7 +16,10 @@ export async function getFabricTypes(options?: GetFabricTypesOptions): Promise<F
 
   const response = await fetch(url);
   const json: ApiResponse<FabricType[]> = await response.json();
-  if (!response.ok) throw new Error(json.error ?? 'Failed to fetch fabric types');
+  if (!response.ok) {
+    logger.error('API error: fetch fabric types', { status: response.status, error: json.error });
+    throw new Error(json.error ?? 'Failed to fetch fabric types');
+  }
   return json.data!;
 }
 
@@ -26,6 +30,9 @@ export async function patchFabricType(id: number, available: boolean): Promise<F
     body: JSON.stringify({ available }),
   });
   const json: ApiResponse<FabricType> = await response.json();
-  if (!response.ok) throw new Error(json.error ?? 'Failed to update fabric type');
+  if (!response.ok) {
+    logger.error('API error: update fabric type', { id, status: response.status, error: json.error });
+    throw new Error(json.error ?? 'Failed to update fabric type');
+  }
   return json.data!;
 }
