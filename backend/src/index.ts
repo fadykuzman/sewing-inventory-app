@@ -6,6 +6,9 @@ import path from 'path';
 import fabricsRouter from './routers/fabrics';
 import fabricTypesRouter from './routers/fabricTypes';
 import materialsRouter from './routers/materials';
+import { requestId } from './middleware/requestId';
+import { logger } from './logger';
+import { httpLogger } from './middleware/httpLogger';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: '../.env' });
@@ -29,6 +32,8 @@ const corsOrigin = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',')
   : '*';
 app.use(cors({ origin: corsOrigin }))
+app.use(requestId)
+app.use(httpLogger)
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 app.get('/health', (_req, res) => {
@@ -39,15 +44,15 @@ app.use('/api/v1/materials', materialsRouter(pool))
 app.use('/api/v1/fabrics', fabricsRouter(pool))
 
 app.listen(port, () => {
-  console.log("Hello from server!")
+  logger.info(`server started on port ${port}`)
 })
 
 pool.query('SELECT 1')
-  .then(() => console.log('DB CONNECTED!'))
-  .catch(err => console.error('DB CONNECTION FAILED', err))
+  .then(() => logger.info(`database connected successfully`))
+  .catch(err => logger.fatal({ err }, 'database connection failed'))
 
 // Centralized error handler — must be last
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(`[${req.method} ${req.path}]`, err);
+  logger.error({ err, requestId: req.id, method: req.method, path: req.path }, 'unhandled error');
   res.status(500).json({ success: false, error: 'An unexpected error occurred. Please try again.' });
 });

@@ -1,6 +1,7 @@
 import { FabricRepository } from '../repositories/fabricRepository';
 import { CreateFabricInput, Fabric, FabricImage, FabricWithImages } from '../types/fabric';
 import { FileStorageService } from './fileStorageService';
+import { logger } from '../logger';
 
 interface ImageFile {
   filename: string;
@@ -63,7 +64,7 @@ export class FabricService {
         )
       );
     } catch (err) {
-      console.error(`[FabricService] Image save failed for fabric ${fabricId}:`, err);
+      logger.error({ err, fabricId }, 'image save failed');
       warning = 'Fabric saved, but some images failed to upload. You can retry uploading them.';
     }
 
@@ -82,7 +83,7 @@ export class FabricService {
         )
       );
     } catch (err) {
-      console.error(`[FabricService] Image add failed for fabric ${fabricId}:`, err);
+      logger.error({ err, fabricId }, 'image add failed');
       warning = 'Some images failed to upload. You can retry uploading them.';
     }
 
