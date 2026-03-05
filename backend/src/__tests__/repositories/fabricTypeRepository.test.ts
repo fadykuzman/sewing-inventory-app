@@ -1,5 +1,7 @@
 import { FabricTypeRepository } from '../../repositories/fabricTypeRepository';
 
+const TEST_USER_ID = 'test-user-123';
+
 function createMockPool(rows: unknown[] = []) {
   return {
     query: jest.fn().mockResolvedValue({ rows }),
@@ -12,55 +14,62 @@ describe('FabricTypeRepository', () => {
       const pool = createMockPool([{ id: 1, name_en: 'Cotton' }]);
       const repo = new FabricTypeRepository(pool);
 
-      await repo.findAll();
+      await repo.findAll(TEST_USER_ID);
 
       const sql = pool.query.mock.calls[0][0];
-      expect(sql).not.toContain('available');
+      expect(sql).not.toContain('WHERE');
+      expect(pool.query.mock.calls[0][1]).toEqual([TEST_USER_ID]);
     });
 
-    it('filters by available=true when requested', async () => {
-      const pool = createMockPool([{ id: 1, name_en: 'Cotton', available: true }]);
+    it('filters by hidden=false when requested', async () => {
+      const pool = createMockPool([{ id: 1, name_en: 'Cotton', hidden: false }]);
       const repo = new FabricTypeRepository(pool);
 
-      await repo.findAll({ available: true });
+      await repo.findAll(TEST_USER_ID, { hidden: false });
 
       const sql = pool.query.mock.calls[0][0];
-      expect(sql).toContain('ft.available = $1');
-      expect(pool.query.mock.calls[0][1]).toEqual([true]);
+      expect(sql).toContain('uftp.hidden IS NULL OR uftp.hidden = false');
+      expect(pool.query.mock.calls[0][1]).toEqual([TEST_USER_ID]);
     });
 
-    it('filters by available=false when requested', async () => {
+    it('filters by hidden=true when requested', async () => {
       const pool = createMockPool([]);
       const repo = new FabricTypeRepository(pool);
 
-      await repo.findAll({ available: false });
+      await repo.findAll(TEST_USER_ID, { hidden: true });
 
       const sql = pool.query.mock.calls[0][0];
-      expect(sql).toContain('ft.available = $1');
-      expect(pool.query.mock.calls[0][1]).toEqual([false]);
+      expect(sql).toContain('uftp.hidden = true');
+      expect(pool.query.mock.calls[0][1]).toEqual([TEST_USER_ID]);
     });
   });
 
-  describe('updateAvailable', () => {
-    it('updates the available flag and returns the updated row', async () => {
-      const updatedRow = { id: 5, name_en: 'Silk', available: false };
-      const pool = createMockPool([updatedRow]);
+  describe('toggleHidden', () => {
+    it('upserts preference and returns the updated type', async () => {
+      const typeRow = { id: 5, name_en: 'Silk' };
+      const updatedRow = { id: 5, name_en: 'Silk', hidden: true, fabric_count: 0 };
+      const pool = createMockPool();
+      // findById call, then upsert, then select
+      pool.query
+        .mockResolvedValueOnce({ rows: [typeRow] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [updatedRow] });
       const repo = new FabricTypeRepository(pool);
 
-      const result = await repo.updateAvailable(5, false);
+      const result = await repo.toggleHidden(TEST_USER_ID, 5, true);
 
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE fabric_types'),
-        [false, 5]
-      );
       expect(result).toEqual(updatedRow);
+      // Second call is the upsert
+      const upsertSql = pool.query.mock.calls[1][0];
+      expect(upsertSql).toContain('user_fabric_type_preferences');
+      expect(pool.query.mock.calls[1][1]).toEqual([TEST_USER_ID, 5, true]);
     });
 
     it('returns null when fabric type not found', async () => {
       const pool = createMockPool([]);
       const repo = new FabricTypeRepository(pool);
 
-      const result = await repo.updateAvailable(999, true);
+      const result = await repo.toggleHidden(TEST_USER_ID, 999, true);
 
       expect(result).toBeNull();
     });

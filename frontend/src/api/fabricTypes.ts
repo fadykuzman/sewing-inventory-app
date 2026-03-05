@@ -3,13 +3,13 @@ import { logger } from '../logger';
 import { API_URL } from './config';
 
 interface GetFabricTypesOptions {
-  available?: boolean;
+  hidden?: boolean;
 }
 
 export async function getFabricTypes(options?: GetFabricTypesOptions): Promise<FabricType[]> {
   const params = new URLSearchParams();
-  if (options?.available !== undefined) {
-    params.set('available', String(options.available));
+  if (options?.hidden !== undefined) {
+    params.set('hidden', String(options.hidden));
   }
   const query = params.toString();
   const url = `${API_URL}/fabric-types${query ? `?${query}` : ''}`;
@@ -23,11 +23,11 @@ export async function getFabricTypes(options?: GetFabricTypesOptions): Promise<F
   return json.data!;
 }
 
-export async function patchFabricType(id: number, available: boolean): Promise<FabricType> {
+export async function patchFabricType(id: number, hidden: boolean): Promise<FabricType> {
   const response = await fetch(`${API_URL}/fabric-types/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ available }),
+    body: JSON.stringify({ hidden }),
   });
   const json: ApiResponse<FabricType> = await response.json();
   if (!response.ok) {

@@ -31,26 +31,26 @@ export default function FabricTypeListScreen() {
 
   const isSearching = debouncedSearch.length > 0;
 
-  const { data: availableTypes, isLoading, isError, isRefetching, refetch } = useQuery({
-    queryKey: ['fabricTypes', { available: true }],
-    queryFn: () => getFabricTypes({ available: true }),
+  const { data: visibleTypes, isLoading, isError, isRefetching, refetch } = useQuery({
+    queryKey: ['fabricTypes', { hidden: false }],
+    queryFn: () => getFabricTypes({ hidden: false }),
   });
 
   const { data: allTypes } = useQuery({
-    queryKey: ['fabricTypes', { available: undefined }],
+    queryKey: ['fabricTypes', { hidden: undefined }],
     queryFn: () => getFabricTypes(),
     enabled: isSearching,
   });
 
   const toggleMutation = useMutation({
-    mutationFn: ({ id, available }: { id: number; available: boolean }) =>
-      patchFabricType(id, available),
+    mutationFn: ({ id, hidden }: { id: number; hidden: boolean }) =>
+      patchFabricType(id, hidden),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fabricTypes'] });
     },
   });
 
-  const displayTypes = isSearching ? allTypes ?? [] : availableTypes ?? [];
+  const displayTypes = isSearching ? allTypes ?? [] : visibleTypes ?? [];
 
   const filtered = displayTypes.filter((t) => {
     if (!debouncedSearch) return true;
@@ -64,7 +64,7 @@ export default function FabricTypeListScreen() {
 
   const handleToggleConfirm = () => {
     if (!dialogType) return;
-    toggleMutation.mutate({ id: dialogType.id, available: !dialogType.available });
+    toggleMutation.mutate({ id: dialogType.id, hidden: !dialogType.hidden });
     setDialogType(null);
   };
 
@@ -107,20 +107,20 @@ export default function FabricTypeListScreen() {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <Card
-            style={[styles.card, !item.available && styles.cardHidden]}
+            style={[styles.card, item.hidden && styles.cardHidden]}
             onPress={() => navigation.navigate('FabricsByType', { typeId: item.id, typeName: item.name })}
             onLongPress={() => handleLongPress(item)}
           >
             <Card.Content style={styles.cardRow}>
               <View style={styles.cardText}>
-                <Text variant="titleMedium" style={!item.available ? { color: theme.colors.outline } : undefined}>
+                <Text variant="titleMedium" style={item.hidden ? { color: theme.colors.outline } : undefined}>
                   {item.name}
                 </Text>
-                <Text variant="bodySmall" style={!item.available ? { color: theme.colors.outline } : undefined}>
+                <Text variant="bodySmall" style={item.hidden ? { color: theme.colors.outline } : undefined}>
                   {item.name_en}
                 </Text>
               </View>
-              <Text variant="titleLarge" style={[styles.count, !item.available && { color: theme.colors.outline }]}>
+              <Text variant="titleLarge" style={[styles.count, item.hidden && { color: theme.colors.outline }]}>
                 {item.fabric_count}
               </Text>
             </Card.Content>
@@ -130,18 +130,18 @@ export default function FabricTypeListScreen() {
 
       <Portal>
         <Dialog visible={!!dialogType} onDismiss={() => setDialogType(null)}>
-          <Dialog.Title>{dialogType?.available ? 'Hide' : 'Show'} fabric type?</Dialog.Title>
+          <Dialog.Title>{dialogType?.hidden ? 'Show' : 'Hide'} fabric type?</Dialog.Title>
           <Dialog.Content>
             <Text>
-              {dialogType?.available
-                ? `"${dialogType?.name}" will be hidden from the landing page. You can still find it via search.`
-                : `"${dialogType?.name}" will be shown on the landing page again.`}
+              {dialogType?.hidden
+                ? `"${dialogType?.name}" will be shown on the landing page again.`
+                : `"${dialogType?.name}" will be hidden from the landing page. You can still find it via search.`}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setDialogType(null)}>Cancel</Button>
             <Button onPress={handleToggleConfirm}>
-              {dialogType?.available ? 'Hide' : 'Show'}
+              {dialogType?.hidden ? 'Show' : 'Hide'}
             </Button>
           </Dialog.Actions>
         </Dialog>

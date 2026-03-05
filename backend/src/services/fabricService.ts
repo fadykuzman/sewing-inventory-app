@@ -18,16 +18,16 @@ export class FabricService {
     private fileStorage: FileStorageService
   ) { }
 
-  async createFabric(data: CreateFabricInput): Promise<Fabric> {
-    return this.repo.insert(data);
+  async createFabric(data: CreateFabricInput, userId: string): Promise<Fabric> {
+    return this.repo.insert(data, userId);
   }
 
-  async getAllFabrics(limit: number, offset: number, search?: string, fabricTypeId?: number): Promise<FabricWithImages[]> {
-    return this.repo.findAllWithImages(limit, offset, search, fabricTypeId);
+  async getAllFabrics(userId: string, limit: number, offset: number, search?: string, fabricTypeId?: number): Promise<FabricWithImages[]> {
+    return this.repo.findAllWithImages(userId, limit, offset, search, fabricTypeId);
   }
 
-  async getFabricById(id: string): Promise<FabricWithImages | null> {
-    const fabric = await this.repo.findById(id);
+  async getFabricById(id: string, userId: string): Promise<FabricWithImages | null> {
+    const fabric = await this.repo.findById(id, userId);
     if (!fabric) return null;
     const [images, materials] = await Promise.all([
       this.repo.findImagesByFabricId(fabric.id),
@@ -36,11 +36,11 @@ export class FabricService {
     return { ...fabric, images, materials };
   }
 
-  async deleteFabric(id: string): Promise<boolean> {
+  async deleteFabric(id: string, userId: string): Promise<boolean> {
     const images = await this.repo.findImagesByFabricId(id);
 
     await this.repo.deleteImagesByFabricId(id);
-    const deleted = await this.repo.deleteById(id);
+    const deleted = await this.repo.deleteById(id, userId);
 
     if (deleted) {
       await Promise.allSettled(
@@ -98,8 +98,8 @@ export class FabricService {
     );
   }
 
-  async updateFabric(id: string, data: CreateFabricInput): Promise<Fabric | null> {
-    return this.repo.update(id, data);
+  async updateFabric(id: string, data: CreateFabricInput, userId: string): Promise<Fabric | null> {
+    return this.repo.update(id, data, userId);
   }
 
   async saveMaterials(fabricId: string, materials: { material_id: number; percentage: number }[]): Promise<void> {

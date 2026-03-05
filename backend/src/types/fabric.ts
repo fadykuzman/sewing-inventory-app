@@ -6,7 +6,7 @@ export interface FabricType {
   slug_en: string;
   category: string;
   use_case: string;
-  available: boolean;
+  hidden: boolean;
   fabric_count: number;
 }
 

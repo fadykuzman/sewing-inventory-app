@@ -4,14 +4,14 @@ import { CreateFabricInput, Fabric, FabricImage, FabricMaterial, FabricWithImage
 export class FabricRepository {
   constructor(private pool: Pool) { }
 
-  async insert(data: CreateFabricInput): Promise<Fabric> {
+  async insert(data: CreateFabricInput, userId: string): Promise<Fabric> {
     const { name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
 
     const result = await this.pool.query(
-      `INSERT INTO fabrics (name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO fabrics (name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas]
+      [name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, userId]
     );
 
     return result.rows[0];
@@ -26,14 +26,14 @@ export class FabricRepository {
     return result.rows[0];
   }
 
-  async findAll(): Promise<Fabric[]> {
-    const result = await this.pool.query(`SELECT * FROM fabrics ORDER BY created_at DESC`);
+  async findAll(userId: string): Promise<Fabric[]> {
+    const result = await this.pool.query(`SELECT * FROM fabrics WHERE user_id = $1 ORDER BY created_at DESC`, [userId]);
     return result.rows;
   }
 
-  async findAllWithImages(limit: number, offset: number, search?: string, fabricTypeId?: number): Promise<FabricWithImages[]> {
-    const params: (string | number)[] = [];
-    const conditions: string[] = [];
+  async findAllWithImages(userId: string, limit: number, offset: number, search?: string, fabricTypeId?: number): Promise<FabricWithImages[]> {
+    const params: (string | number)[] = [userId];
+    const conditions: string[] = [`f2.user_id = $1`];
 
     if (search) {
       params.push(`%${search}%`);
@@ -48,7 +48,7 @@ export class FabricRepository {
       conditions.push(`fabric_type_id = $${params.length}`);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
     const limitIdx = params.length + 1;
     const offsetIdx = params.length + 2;
@@ -134,13 +134,13 @@ export class FabricRepository {
     return Array.from(fabricMap.values());
   }
 
-  async findById(id: string): Promise<Fabric | null> {
+  async findById(id: string, userId: string): Promise<Fabric | null> {
     const result = await this.pool.query(
       `SELECT f.*, ft.name_en AS fabric_type_name
        FROM fabrics f
        JOIN fabric_types ft ON f.fabric_type_id = ft.id
-       WHERE f.id = $1`,
-      [id]
+       WHERE f.id = $1 AND f.user_id = $2`,
+      [id, userId]
     );
     return result.rows[0] ?? null;
   }
@@ -153,8 +153,8 @@ export class FabricRepository {
     return result.rows;
   }
 
-  async deleteById(id: string): Promise<boolean> {
-    const result = await this.pool.query(`DELETE FROM fabrics WHERE id = $1`, [id]);
+  async deleteById(id: string, userId: string): Promise<boolean> {
+    const result = await this.pool.query(`DELETE FROM fabrics WHERE id = $1 AND user_id = $2`, [id, userId]);
     return (result.rowCount ?? 0) > 0;
   }
 
@@ -179,18 +179,18 @@ export class FabricRepository {
     return result.rows;
   }
 
-  async findByTypeAndName(fabricTypeId: number, name: string, excludeId?: string): Promise<Fabric | null> {
-    const params: (string | number)[] = [fabricTypeId, name];
-    let sql = `SELECT * FROM fabrics WHERE fabric_type_id = $1 AND name = $2`;
+  async findByTypeAndName(fabricTypeId: number, name: string, userId: string, excludeId?: string): Promise<Fabric | null> {
+    const params: (string | number)[] = [fabricTypeId, name, userId];
+    let sql = `SELECT * FROM fabrics WHERE fabric_type_id = $1 AND name = $2 AND user_id = $3`;
     if (excludeId) {
       params.push(excludeId);
-      sql += ` AND id != $3`;
+      sql += ` AND id != $4`;
     }
     const result = await this.pool.query(sql, params);
     return result.rows[0] ?? null;
   }
 
-  async update(id: string, data: CreateFabricInput): Promise<Fabric | null> {
+  async update(id: string, data: CreateFabricInput, userId: string): Promise<Fabric | null> {
     const { name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas } = data;
 
     const result = await this.pool.query(
@@ -198,9 +198,9 @@ export class FabricRepository {
        SET name = $1, fabric_type_id = $2, color = $3, pattern = $4, amount_meters = $5,
            label = $6, purchase_location = $7, cost = $8, project_ideas = $9,
            updated_at = NOW()
-       WHERE id = $10
+       WHERE id = $10 AND user_id = $11
        RETURNING *`,
-      [name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, id]
+      [name, fabric_type_id, color, pattern, amount_meters, label, purchase_location, cost, project_ideas, id, userId]
     );
 
     return result.rows[0] ?? null;

@@ -42,13 +42,14 @@ export default function fabricsRouter(pool: Pool) {
   const fileStorage = new LocalFileStorageService();
   const fabricService = new FabricService(fabricRepo, fileStorage);
 
-  router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { limit, offset } = parsePagination(_req.query);
-      const search = typeof _req.query.search === 'string' ? _req.query.search.trim() : undefined;
-      const fabricTypeIdRaw = _req.query.fabric_type_id;
+      const userId = req.user!.uid;
+      const { limit, offset } = parsePagination(req.query);
+      const search = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
+      const fabricTypeIdRaw = req.query.fabric_type_id;
       const fabricTypeId = typeof fabricTypeIdRaw === 'string' && fabricTypeIdRaw.trim() ? Number(fabricTypeIdRaw) : undefined;
-      const fabrics = await fabricService.getAllFabrics(limit, offset, search || undefined, fabricTypeId || undefined);
+      const fabrics = await fabricService.getAllFabrics(userId, limit, offset, search || undefined, fabricTypeId || undefined);
       const response: ApiResponse<FabricWithImages[]> = { success: true, data: fabrics };
       res.json(response);
     } catch (err) {
@@ -58,7 +59,8 @@ export default function fabricsRouter(pool: Pool) {
 
   router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const fabric = await fabricService.getFabricById(req.params['id'] as string);
+      const userId = req.user!.uid;
+      const fabric = await fabricService.getFabricById(req.params['id'] as string, userId);
       if (!fabric) {
         res.status(404).json({ success: false, error: 'Fabric not found' });
         return;
@@ -72,6 +74,7 @@ export default function fabricsRouter(pool: Pool) {
 
   router.post('/', upload.array('images', MAX_IMAGE_COUNT), async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = req.user!.uid;
       const errors = validateCreateFabric(req.body);
 
       const rawMaterials = req.body.materials ? JSON.parse(req.body.materials) : [];
@@ -91,13 +94,13 @@ export default function fabricsRouter(pool: Pool) {
         cost: req.body.cost != null && req.body.cost !== '' ? Number(req.body.cost) : undefined,
       };
 
-      const existing = await fabricRepo.findByTypeAndName(fabricData.fabric_type_id, fabricData.name);
+      const existing = await fabricRepo.findByTypeAndName(fabricData.fabric_type_id, fabricData.name, userId);
       if (existing) {
         res.status(400).json({ success: false, errors: ['A fabric with this name already exists for this type.'] });
         return;
       }
 
-      const fabric = await fabricService.createFabric(fabricData);
+      const fabric = await fabricService.createFabric(fabricData, userId);
 
       const materials = rawMaterials.map((m: { material_id: string | number; percentage: string | number }) => ({
         material_id: Number(m.material_id),
@@ -126,6 +129,7 @@ export default function fabricsRouter(pool: Pool) {
 
   router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = req.user!.uid;
       const errors = validateCreateFabric(req.body);
 
       const rawMaterials = req.body.materials ?? [];
@@ -146,13 +150,13 @@ export default function fabricsRouter(pool: Pool) {
         cost: req.body.cost != null && req.body.cost !== '' ? Number(req.body.cost) : undefined,
       };
 
-      const existing = await fabricRepo.findByTypeAndName(fabricData.fabric_type_id, fabricData.name, fabricId);
+      const existing = await fabricRepo.findByTypeAndName(fabricData.fabric_type_id, fabricData.name, userId, fabricId);
       if (existing) {
         res.status(400).json({ success: false, errors: ['A fabric with this name already exists for this type.'] });
         return;
       }
 
-      const fabric = await fabricService.updateFabric(fabricId, fabricData);
+      const fabric = await fabricService.updateFabric(fabricId, fabricData, userId);
       if (!fabric) {
         res.status(404).json({ success: false, error: 'Fabric not found' });
         return;
@@ -182,8 +186,9 @@ export default function fabricsRouter(pool: Pool) {
 
   router.post('/:id/images', upload.array('images', MAX_IMAGE_COUNT), async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = req.user!.uid;
       const fabricId = req.params['id'] as string;
-      const fabric = await fabricService.getFabricById(fabricId);
+      const fabric = await fabricService.getFabricById(fabricId, userId);
       if (!fabric) {
         res.status(404).json({ success: false, error: 'Fabric not found' });
         return;
@@ -211,8 +216,9 @@ export default function fabricsRouter(pool: Pool) {
 
   router.delete('/:id/images', async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = req.user!.uid;
       const fabricId = req.params['id'] as string;
-      const fabric = await fabricService.getFabricById(fabricId);
+      const fabric = await fabricService.getFabricById(fabricId, userId);
       if (!fabric) {
         res.status(404).json({ success: false, error: 'Fabric not found' });
         return;
@@ -234,7 +240,8 @@ export default function fabricsRouter(pool: Pool) {
 
   router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const deleted = await fabricService.deleteFabric(req.params['id'] as string);
+      const userId = req.user!.uid;
+      const deleted = await fabricService.deleteFabric(req.params['id'] as string, userId);
       if (!deleted) {
         res.status(404).json({ success: false, error: 'Fabric not found' });
         return;

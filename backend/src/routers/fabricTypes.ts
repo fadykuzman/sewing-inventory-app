@@ -9,16 +9,17 @@ export default function fabricTypesRouter(pool: Pool): Router {
 
   router.get('/', async (req: Request, res: Response<ApiResponse<FabricType[]>>, next: NextFunction) => {
     try {
-      const availableParam = req.query.available;
-      const options: { available?: boolean } = {};
+      const userId = req.user!.uid;
+      const hiddenParam = req.query.hidden;
+      const options: { hidden?: boolean } = {};
 
-      if (availableParam === 'true') {
-        options.available = true;
-      } else if (availableParam === 'false') {
-        options.available = false;
+      if (hiddenParam === 'true') {
+        options.hidden = true;
+      } else if (hiddenParam === 'false') {
+        options.hidden = false;
       }
 
-      const types = await repo.findAll(options);
+      const types = await repo.findAll(userId, options);
       res.json({ success: true, data: types });
     } catch (err) {
       next(err);
@@ -27,15 +28,16 @@ export default function fabricTypesRouter(pool: Pool): Router {
 
   router.patch('/:id', async (req: Request, res: Response<ApiResponse<FabricType>>, next: NextFunction) => {
     try {
+      const userId = req.user!.uid;
       const id = Number(req.params.id);
-      const { available } = req.body;
+      const { hidden } = req.body;
 
-      if (typeof available !== 'boolean') {
-        res.status(400).json({ success: false, error: 'available must be a boolean' });
+      if (typeof hidden !== 'boolean') {
+        res.status(400).json({ success: false, error: 'hidden must be a boolean' });
         return;
       }
 
-      const updated = await repo.updateAvailable(id, available);
+      const updated = await repo.toggleHidden(userId, id, hidden);
       if (!updated) {
         res.status(404).json({ success: false, error: 'Fabric type not found' });
         return;
