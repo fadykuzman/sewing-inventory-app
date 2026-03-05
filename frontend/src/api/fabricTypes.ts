@@ -1,6 +1,7 @@
 import { ApiResponse, FabricType } from '../types/fabric';
 import { logger } from '../logger';
 import { API_URL } from './config';
+import { authFetch } from './authFetch';
 
 interface GetFabricTypesOptions {
   hidden?: boolean;
@@ -14,7 +15,7 @@ export async function getFabricTypes(options?: GetFabricTypesOptions): Promise<F
   const query = params.toString();
   const url = `${API_URL}/fabric-types${query ? `?${query}` : ''}`;
 
-  const response = await fetch(url);
+  const response = await authFetch(url);
   const json: ApiResponse<FabricType[]> = await response.json();
   if (!response.ok) {
     logger.error('API error: fetch fabric types', { status: response.status, error: json.error });
@@ -24,7 +25,7 @@ export async function getFabricTypes(options?: GetFabricTypesOptions): Promise<F
 }
 
 export async function patchFabricType(id: number, hidden: boolean): Promise<FabricType> {
-  const response = await fetch(`${API_URL}/fabric-types/${id}`, {
+  const response = await authFetch(`${API_URL}/fabric-types/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ hidden }),

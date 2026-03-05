@@ -3,13 +3,17 @@ import { Pool } from 'pg';
 import { FabricTypeRepository } from '../repositories/fabricTypeRepository';
 import { ApiResponse, FabricType } from '../types/fabric';
 
+function getUserId(req: Request): string {
+  return req.user?.uid ?? req.viewer!.ownerId;
+}
+
 export default function fabricTypesRouter(pool: Pool): Router {
   const router = Router();
   const repo = new FabricTypeRepository(pool);
 
   router.get('/', async (req: Request, res: Response<ApiResponse<FabricType[]>>, next: NextFunction) => {
     try {
-      const userId = req.user!.uid;
+      const userId = getUserId(req);
       const hiddenParam = req.query.hidden;
       const options: { hidden?: boolean } = {};
 

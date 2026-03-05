@@ -1,6 +1,7 @@
 import { ApiResponse, FabricImage, FabricWithImages } from '../types/fabric';
 import { logger } from '../logger';
 import { API_URL } from './config';
+import { authFetch } from './authFetch';
 
 const BASE_URL = API_URL.replace('/api/v1', '');
 
@@ -10,7 +11,7 @@ export function getImageUrl(filePath: string): string {
 }
 
 export async function getFabrics(): Promise<FabricWithImages[]> {
-  const response = await fetch(`${API_URL}/fabrics`);
+  const response = await authFetch(`${API_URL}/fabrics`);
   const json: ApiResponse<FabricWithImages[]> = await response.json();
   if (!response.ok) {
     logger.error('API error: fetch fabrics', { status: response.status, error: json.error });
@@ -20,7 +21,7 @@ export async function getFabrics(): Promise<FabricWithImages[]> {
 }
 
 export async function getFabricById(id: string): Promise<FabricWithImages> {
-  const response = await fetch(`${API_URL}/fabrics/${id}`);
+  const response = await authFetch(`${API_URL}/fabrics/${id}`);
   const json: ApiResponse<FabricWithImages> = await response.json();
   if (!response.ok) {
     logger.error('API error: fetch fabric', { id, status: response.status, error: json.error });
@@ -30,7 +31,7 @@ export async function getFabricById(id: string): Promise<FabricWithImages> {
 }
 
 export async function deleteFabric(id: string): Promise<void> {
-  const response = await fetch(`${API_URL}/fabrics/${id}`, { method: 'DELETE' });
+  const response = await authFetch(`${API_URL}/fabrics/${id}`, { method: 'DELETE' });
   const json: ApiResponse<never> = await response.json();
   if (!response.ok) {
     logger.error('API error: delete fabric', { id, status: response.status, error: json.error });
@@ -39,7 +40,7 @@ export async function deleteFabric(id: string): Promise<void> {
 }
 
 export async function createFabric(formData: FormData): Promise<ApiResponse<FabricWithImages>> {
-  const response = await fetch(`${API_URL}/fabrics`, {
+  const response = await authFetch(`${API_URL}/fabrics`, {
     method: 'POST',
     body: formData,
   });
@@ -56,7 +57,7 @@ export async function createFabric(formData: FormData): Promise<ApiResponse<Fabr
 }
 
 export async function updateFabric(id: string, data: Record<string, unknown>): Promise<ApiResponse<FabricWithImages>> {
-  const response = await fetch(`${API_URL}/fabrics/${id}`, {
+  const response = await authFetch(`${API_URL}/fabrics/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -74,7 +75,7 @@ export async function updateFabric(id: string, data: Record<string, unknown>): P
 }
 
 export async function addFabricImages(fabricId: string, formData: FormData): Promise<ApiResponse<FabricImage[]>> {
-  const response = await fetch(`${API_URL}/fabrics/${fabricId}/images`, {
+  const response = await authFetch(`${API_URL}/fabrics/${fabricId}/images`, {
     method: 'POST',
     body: formData,
   });
@@ -90,7 +91,7 @@ export async function addFabricImages(fabricId: string, formData: FormData): Pro
 }
 
 export async function removeFabricImages(fabricId: string, imageIds: string[]): Promise<void> {
-  const response = await fetch(`${API_URL}/fabrics/${fabricId}/images`, {
+  const response = await authFetch(`${API_URL}/fabrics/${fabricId}/images`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ imageIds }),
@@ -107,7 +108,7 @@ export async function getFabricsPaginated(limit: number, offset: number, search?
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (search) params.set('search', search);
   if (fabricTypeId) params.set('fabric_type_id', String(fabricTypeId));
-  const response = await fetch(`${API_URL}/fabrics?${params}`);
+  const response = await authFetch(`${API_URL}/fabrics?${params}`);
   const json: ApiResponse<FabricWithImages[]> = await response.json();
   if (!response.ok) {
     logger.error('API error: fetch fabrics paginated', { status: response.status, error: json.error });

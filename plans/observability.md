@@ -58,7 +58,7 @@ Replace `console.log` / `console.error` with structured JSON logging so logs are
 
 ---
 
-## Phase 2: Loki + Grafana
+## Phase 2: Loki + Grafana *(Home Server — not in this codebase)*
 
 ### Goal
 Centralized log viewing — search and filter logs from a web UI.

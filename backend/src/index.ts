@@ -10,6 +10,8 @@ import { requestId } from './middleware/requestId';
 import { logger } from './logger';
 import { httpLogger } from './middleware/httpLogger';
 import { authMiddleware } from './middleware/auth';
+import { viewerMiddleware, requireAuth } from './middleware/viewer';
+import inviteRouter from './routers/invite';
 import logsRouter from './routers/logs';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -42,10 +44,13 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 })
 app.use('/api/v1', authMiddleware(pool))
+app.use('/api/v1', viewerMiddleware(pool))
+app.use('/api/v1', requireAuth)
+app.use('/api/v1/invite', inviteRouter(pool))
 app.use('/api/v1/fabric-types', fabricTypesRouter(pool))
 app.use('/api/v1/materials', materialsRouter(pool))
 app.use('/api/v1/fabrics', fabricsRouter(pool))
-app.use('api/v1/logs', logsRouter)
+app.use('/api/v1/logs', logsRouter)
 
 app.listen(port, () => {
   logger.info(`server started on port ${port}`)

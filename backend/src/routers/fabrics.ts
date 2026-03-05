@@ -9,6 +9,10 @@ import { ApiResponse, FabricImage, FabricWithImages } from '../types/fabric';
 import { LocalFileStorageService } from '../services/fileStorageService';
 import { parsePagination } from '../validation/paginationValidation'
 
+function getUserId(req: Request): string {
+  return req.user?.uid ?? req.viewer!.ownerId;
+}
+
 const storage = multer.diskStorage({
   destination: 'uploads/fabrics/',
   filename: (_req, file, cb) => {
@@ -44,7 +48,7 @@ export default function fabricsRouter(pool: Pool) {
 
   router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.uid;
+      const userId = getUserId(req);
       const { limit, offset } = parsePagination(req.query);
       const search = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
       const fabricTypeIdRaw = req.query.fabric_type_id;
@@ -59,7 +63,7 @@ export default function fabricsRouter(pool: Pool) {
 
   router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.uid;
+      const userId = getUserId(req);
       const fabric = await fabricService.getFabricById(req.params['id'] as string, userId);
       if (!fabric) {
         res.status(404).json({ success: false, error: 'Fabric not found' });

@@ -14,7 +14,8 @@ export function authMiddleware(pool: Pool) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
-      res.status(401).json({ success: false, error: 'Missing or invalid authorization header' });
+      // No Bearer token — pass through to let viewerMiddleware try
+      next();
       return;
     }
 
