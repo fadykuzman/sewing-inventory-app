@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { getFabricsPaginated, getImageUrl } from '../api/fabrics';
 import { FabricWithImages } from '../types/fabric';
+import { useViewer } from '../context/ViewerContext';
 import type { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'FabricsByType'>;
@@ -17,6 +18,7 @@ export default function FabricsByTypeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ScreenRouteProp>();
   const { typeId, typeName } = route.params;
+  const { isViewer } = useViewer();
 
   const { data, isLoading, isError, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['fabrics', 'byType', typeId],
@@ -58,14 +60,16 @@ export default function FabricsByTypeScreen() {
           <FabricCard fabric={item} onPress={() => navigation.navigate('FabricDetail', { id: item.id })} />
         )}
       />
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        onPress={() => navigation.navigate('AddFabric', {
-          preselectedTypeId: typeId,
-          preselectedTypeName: typeName,
-        })}
-      />
+      {!isViewer && (
+        <FAB
+          icon="plus"
+          style={styles.fab}
+          onPress={() => navigation.navigate('AddFabric', {
+            preselectedTypeId: typeId,
+            preselectedTypeName: typeName,
+          })}
+        />
+      )}
     </View>
   );
 }

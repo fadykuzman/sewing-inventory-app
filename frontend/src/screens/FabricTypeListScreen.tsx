@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getFabricTypes, patchFabricType } from '../api/fabricTypes';
 import { FabricType } from '../types/fabric';
+import { useViewer } from '../context/ViewerContext';
 import type { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'FabricTypeList'>;
@@ -25,6 +26,7 @@ export default function FabricTypeListScreen() {
   const theme = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
+  const { isViewer } = useViewer();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [dialogType, setDialogType] = useState<FabricType | null>(null);
@@ -109,7 +111,7 @@ export default function FabricTypeListScreen() {
           <Card
             style={[styles.card, item.hidden && styles.cardHidden]}
             onPress={() => navigation.navigate('FabricsByType', { typeId: item.id, typeName: item.name })}
-            onLongPress={() => handleLongPress(item)}
+            onLongPress={isViewer ? undefined : () => handleLongPress(item)}
           >
             <Card.Content style={styles.cardRow}>
               <View style={styles.cardText}>

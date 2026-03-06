@@ -11,7 +11,10 @@ import AddFabricScreen from './src/screens/AddFabricScreen';
 import EditFabricScreen from './src/screens/EditFabricScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { ViewerBanner } from './src/components/ViewerBanner';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { ViewerProvider, useViewer } from './src/context/ViewerContext';
+import { ShareButton } from './src/components/ShareButton';
 import { logger } from './src/logger';
 
 const defaultHandler = ErrorUtils.getGlobalHandler();
@@ -37,6 +40,9 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const { isViewer } = useViewer();
+  const navigationTheme = useNavigationTheme();
+  const shareButton = !isViewer ? () => <ShareButton /> : undefined;
 
   if (loading) {
     return (
@@ -46,30 +52,34 @@ function AppContent() {
     );
   }
 
-  if (!user) {
+  if (!user && !isViewer) {
     return <LoginScreen />;
   }
 
   return (
-    <NavigationContainer theme={useNavigationTheme()}>
-      <Stack.Navigator initialRouteName="FabricTypeList">
+    <View style={{ flex: 1 }}>
+      <ViewerBanner />
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator initialRouteName="FabricTypeList">
         <Stack.Screen
           name="FabricTypeList"
           component={FabricTypeListScreen}
-          options={{ title: 'Fabric Types' }}
+          options={{ title: 'Fabric Types', headerRight: shareButton }}
         />
         <Stack.Screen
           name="FabricsByType"
           component={FabricsByTypeScreen}
           options={({ route }) => ({
             title: route.params.typeName,
+            headerRight: shareButton,
           })}
         />
-        <Stack.Screen name="FabricDetail" component={FabricDetailScreen} options={{ title: 'Fabric Details' }} />
+        <Stack.Screen name="FabricDetail" component={FabricDetailScreen} options={{ title: 'Fabric Details', headerRight: shareButton }} />
         <Stack.Screen name="AddFabric" component={AddFabricScreen} options={{ title: 'Add Fabric' }} />
         <Stack.Screen name="EditFabric" component={EditFabricScreen} options={{ title: 'Edit Fabric' }} />
       </Stack.Navigator>
-    </NavigationContainer>
+      </NavigationContainer>
+    </View>
   );
 }
 
@@ -85,14 +95,16 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <PaperProvider theme={paperTheme}>
-          <ErrorBoundary>
-            <AppContent />
-          </ErrorBoundary>
-          <StatusBar style="auto" />
-        </PaperProvider>
-      </QueryClientProvider>
+      <ViewerProvider>
+        <QueryClientProvider client={queryClient}>
+          <PaperProvider theme={paperTheme}>
+            <ErrorBoundary>
+              <AppContent />
+            </ErrorBoundary>
+            <StatusBar style="auto" />
+          </PaperProvider>
+        </QueryClientProvider>
+      </ViewerProvider>
     </AuthProvider>
   );
 }

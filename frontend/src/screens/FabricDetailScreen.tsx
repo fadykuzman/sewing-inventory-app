@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getFabricById, deleteFabric, getImageUrl } from '../api/fabrics';
+import { useViewer } from '../context/ViewerContext';
 import type { RootStackParamList } from '../../App';
 
 type RouteProp = NativeStackScreenProps<RootStackParamList, 'FabricDetail'>['route'];
@@ -14,6 +15,7 @@ export default function FabricDetailScreen() {
   const { params } = useRoute<RouteProp>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
+  const { isViewer } = useViewer();
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -91,42 +93,48 @@ export default function FabricDetailScreen() {
           </ScrollView>
         )}
 
-        <Button
-          mode="contained"
-          style={styles.editButton}
-          onPress={() => navigation.navigate('EditFabric', { id: params.id })}
-        >
-          Edit fabric
-        </Button>
+        {!isViewer && (
+          <>
+            <Button
+              mode="contained"
+              style={styles.editButton}
+              onPress={() => navigation.navigate('EditFabric', { id: params.id })}
+            >
+              Edit fabric
+            </Button>
 
-        <Button
-          mode="outlined"
-          textColor={theme.colors.error}
-          style={[styles.deleteButton, { borderColor: theme.colors.error }]}
-          onPress={() => setConfirmVisible(true)}
-        >
-          Delete fabric
-        </Button>
+            <Button
+              mode="outlined"
+              textColor={theme.colors.error}
+              style={[styles.deleteButton, { borderColor: theme.colors.error }]}
+              onPress={() => setConfirmVisible(true)}
+            >
+              Delete fabric
+            </Button>
+          </>
+        )}
       </ScrollView>
 
-      <Portal>
-        <Dialog visible={confirmVisible} onDismiss={() => setConfirmVisible(false)}>
-          <Dialog.Title>Delete fabric?</Dialog.Title>
-          <Dialog.Content>
-            <Text>This will permanently delete the fabric and all its images.</Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setConfirmVisible(false)}>Cancel</Button>
-            <Button
-              textColor={theme.colors.error}
-              loading={deleteMutation.isPending}
-              onPress={() => deleteMutation.mutate()}
-            >
-              Delete
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      {!isViewer && (
+        <Portal>
+          <Dialog visible={confirmVisible} onDismiss={() => setConfirmVisible(false)}>
+            <Dialog.Title>Delete fabric?</Dialog.Title>
+            <Dialog.Content>
+              <Text>This will permanently delete the fabric and all its images.</Text>
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={() => setConfirmVisible(false)}>Cancel</Button>
+              <Button
+                textColor={theme.colors.error}
+                loading={deleteMutation.isPending}
+                onPress={() => deleteMutation.mutate()}
+              >
+                Delete
+              </Button>
+            </Dialog.Actions>
+          </Dialog>
+        </Portal>
+      )}
     </>
   );
 }

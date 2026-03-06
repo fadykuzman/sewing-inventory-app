@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "scheme": "bunni-fabrics",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/icon.png",
@@ -28,7 +29,21 @@
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.vanillaandcaramel.sewing"
+      "package": "com.vanillaandcaramel.sewing",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "sewing.vanillaandcaramel.com",
+              "pathPrefix": "/invite"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "plugins": [
       [

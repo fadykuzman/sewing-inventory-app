@@ -13,6 +13,7 @@ import { authMiddleware } from './middleware/auth';
 import { viewerMiddleware, requireAuth } from './middleware/viewer';
 import inviteRouter from './routers/invite';
 import logsRouter from './routers/logs';
+import pagesRouter from './routers/pages';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: '../.env' });
@@ -43,6 +44,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 })
+app.use(pagesRouter)
 app.use('/api/v1', authMiddleware(pool))
 app.use('/api/v1', viewerMiddleware(pool))
 app.use('/api/v1', requireAuth)

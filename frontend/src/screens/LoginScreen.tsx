@@ -41,7 +41,7 @@ export default function LoginScreen() {
     >
       <View style={styles.form}>
         <Text variant="headlineMedium" style={styles.title}>
-          Sewing Inventory
+          Bunni Fabrics
         </Text>
 
         <TextInput

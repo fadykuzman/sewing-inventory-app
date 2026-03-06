@@ -6,6 +6,15 @@
   "build": {
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://sewing.vanillaandcaramel.com/api/v1",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBtkU3gyIK2vvM26Nk-NeHJe-mi7g8foJs",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "sewing-inventory.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "sewing-inventory",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "sewing-inventory.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "787563967973",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:787563967973:web:f587343a7a326ee38c2b0c"
+      },
       "android": {
         "buildType": "apk",
         "autoIncrement": true
